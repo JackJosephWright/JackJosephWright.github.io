@@ -1,7 +1,54 @@
 <!DOCTYPE html>
 <html>
-<body>
-<h1>Hello World</h1>
-<p>I'm hosted with GitHub Pages.</p>
-</body>
+
+    <head>JS homework</head>
+    <body>
+    <h1>Word Flipper</h1>
+    <p>This is my word flipper</p>
+    
+        <script type="text/javascript">
+        
+        function invert(){
+            var t = document.getElementById("target");
+            t.innerHTML = divis(document.getElementById('word').value);
+            };
+        function divis(wrd){
+            
+            var rev = wrd.split("").reverse().join("");;
+            
+            ;
+            
+            var str;
+
+            str = 'the inverse of ' + wrd + ' is ' +rev;
+            return(str)
+        };
+        
+        </script>
+        
+        <!--reverse any word you type in-->
+        <p><form >
+            <input id ='word' type="text" size=4>
+            <input type='button' value = 'flip' onclick="invert();">
+        </form>
+        </p>
+        <div id="target"></div>
+        <h1>Multiplication Table</h1>
+        <p>input a integer and this function will calculate its multiples</p>
+        <p><form >
+            <input id ='num' type="number" size=4>
+            <input type='button' value = 'calculate' onclick="multiples();">
+        </form>
+        
+        </p>
+
+        
+        <div id='container'></div>
+            <!--here goes our data-->
+        </table>
+        </p>
+        <div id="target"></div>
+    </body>
+    <script src='table-simple.js'></script>
 </html>
+
