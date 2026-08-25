@@ -114,7 +114,7 @@
                 <article class="card card-featured">
                     <h3>Autonomous MTG Arena agent</h3>
                     <ul>
-                        <li>Harness for LLM-driven play of Magic: The Gathering Arena against the real game client. Optimal play in Magic is provably at least as hard as the Halting Problem; the client computes the legal menu, which is what makes the problem tractable at all.</li>
+                        <li>Harness for LLM-driven play of Magic: The Gathering Arena. The game has no API, so the bot drives the real client through its interface; the client publishes the legal move set, so the model only ever chooses among options it is already allowed to take.</li>
                         <li><strong>Live result:</strong> a naive Haiku pilot with no game-specific tuning played 55 games against Arena's built-in AI and finished 27–28, a 49.1% win rate, at ~$0.03 per game — while the actuation layer still had known defects.</li>
                         <li>Loop: perceive (game log as truth, vision only for screen position) → decide (typed request to the model) → execute (verified clicks). Every reported success is provisional until the engine confirms it.</li>
                         <li>Runs on a fleet of VMware VMs with a health sensor that classifies nodes CRASH / WEDGE / ANOMALY / CRAWL / HEALTHY.</li>
@@ -199,16 +199,16 @@
             <p class="section-note">What I built, and the parts that were actually interesting.</p>
             <ul class="writing-list">
                 <li>
-                    <a href="writing/mtga-agent.html">An LLM that plays Magic: The Gathering Arena</a>
-                    <p>Optimal play in Magic is provably at least as hard as the Halting Problem. Why that doesn't matter, why the game log made the vision layer almost disappear, and why a click that reports success usually didn't work.</p>
+                    <a href="writing/mtga-agent.html">Building a bot that plays Magic: The Gathering Arena</a>
+                    <p>The game has no API, so the bot uses it the way a person does. How the game's own log made the vision layer almost disappear, and why a click that reports success usually didn't do anything.</p>
                 </li>
                 <li>
                     <a href="writing/brain.html">An LLM refused to block 97% of the time</a>
                     <p>A naive pilot reached 49% against Arena's own AI for three cents a game, then declined to block on 268 of 276 chances. It wasn't bad at combat — power and toughness appeared in zero of 4,201 prompts.</p>
                 </li>
                 <li>
-                    <a href="writing/win-prob.html">What predicts winning in Magic: 5.1M games</a>
-                    <p>Rearranging the same numbers beat adding new ones by 71%. Rarity and mana cost explain 3% of how good a card is. And nothing you can see in a snapshot can price an attack.</p>
+                    <a href="writing/win-prob.html">How do you put a number on a Magic position?</a>
+                    <p>A card's value can't be read off the card, every measurement of it is contaminated by the deck it came from, and what you condition on determines what the agent would learn to want. Some of the game can't be scored from a position at all.</p>
                 </li>
                 <li>
                     <a href="writing/dataset-validation.html">Errors hiding in a 5.1M-game dataset</a>
