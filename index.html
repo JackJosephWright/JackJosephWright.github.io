@@ -4,9 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Jack Wright — AI / Automation Engineer</title>
-    <meta name="description" content="Jack Wright builds data platforms, applied LLM systems, and tools people actually use. Portfolio: contract intelligence, analytics engineering, autonomous agents, and MTG research.">
+    <meta name="description" content="Jack Wright. AI/automation engineer. Data platforms (dbt, Prefect, Azure), applied LLM systems, document intelligence, autonomous agents. Shipped systems with measured results.">
     <meta property="og:title" content="Jack Wright — AI / Automation Engineer">
-    <meta property="og:description" content="I turn processes that live in spreadsheets into systems: data platform underneath, AI where judgment is needed, and a real interface for the person who has to use it.">
+    <meta property="og:description" content="Data platforms, applied LLM systems, document intelligence, autonomous agents. Shipped systems with measured results.">
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://jackjosephwright.github.io/">
     <meta name="twitter:card" content="summary">
@@ -30,212 +30,148 @@
         </nav>
         <div class="hero">
             <p class="hero-kicker">AI / Automation Engineer</p>
-            <h1>I turn processes that live in spreadsheets into&nbsp;systems.</h1>
+            <h1>Jack Wright</h1>
             <p class="hero-sub">
-                Data platform underneath, AI where judgment is genuinely needed, and a real
-                interface for the person who has to use it. I ship end-to-end and alone —
-                and I can prove the results with numbers, not adjectives.
+                Data platforms · applied LLM systems · document intelligence · autonomous
+                agents. Currently at a commercial solar EPC. MS in Data Science.
+                Everything below shipped to production users; quality claims are measured,
+                not estimated.
             </p>
             <div class="hero-actions">
-                <a class="btn btn-primary" href="#work">See what I've built</a>
-                <a class="btn" href="https://www.linkedin.com/in/jack-wright-97b9b61b7/" target="_blank" rel="noopener">Connect on LinkedIn</a>
+                <a class="btn btn-primary" href="#work">Shipped systems</a>
+                <a class="btn" href="https://www.linkedin.com/in/jack-wright-97b9b61b7/" target="_blank" rel="noopener">LinkedIn</a>
             </div>
         </div>
     </header>
 
     <main>
-        <section id="about" class="section">
-            <h2><span class="section-num">01</span> About</h2>
-            <div class="prose">
-                <p>
-                    I build the systems a company doesn't have yet. At a commercial solar
-                    EPC I've stood up the analytics warehouse, the internal knowledge
-                    layer, a contract-review engine that reads hundreds of obligations and
-                    tells legal exactly where the gaps are, and a lead engine built from
-                    public records that put a verified target list in front of the sales
-                    team.
-                </p>
-                <p>
-                    The thread through all of it: real evaluation instead of demos,
-                    deterministic logic wherever a decision has to be auditable, models
-                    only where judgment is genuinely needed — and shipping into the tools
-                    people already use, because the best system nobody opens is worth
-                    nothing.
-                </p>
-            </div>
-        </section>
-
         <section id="work" class="section">
-            <h2><span class="section-num">02</span> Systems I've shipped</h2>
-            <p class="section-note">Internal production systems, described at the capability level.</p>
+            <h2><span class="section-num">01</span> Shipped systems</h2>
+            <p class="section-note">Internal production systems. Described at the capability level; no client or employer internals.</p>
             <div class="card-grid">
                 <article class="card">
                     <h3>Contract-review engine</h3>
-                    <p>
-                        Extracts 500+ discrete obligations from long-form agreements and
-                        reconciles them against a standard template, producing a coverage
-                        matrix that routes each gap to the right reader. Calibrated on a
-                        hand-graded set at 92% gap recall with zero false positives.
-                    </p>
-                    <p>
-                        The architecture is what makes it trustworthy: decision rules live
-                        in ~150 tested functions, with model reasoning confined to semantic
-                        matching — so legal review can check the logic instead of trusting
-                        a black box.
-                    </p>
-                    <ul class="tags"><li>Applied LLMs</li><li>Document intelligence</li><li>Evaluation</li></ul>
+                    <ul>
+                        <li>Input: long-form agreement. Output: 500+ discrete obligations in a typed schema, reconciled against a standard template.</li>
+                        <li>Produces a coverage matrix; each gap routed to the responsible reader.</li>
+                        <li>Calibration on a hand-graded set with negative controls: 92% gap recall, 0% false positives.</li>
+                        <li>~150 tested decision functions handle reconciliation rules (flooring, window nesting, asymmetric verdicts). LLM scope limited to semantic matching, so legal can audit the logic.</li>
+                    </ul>
+                    <ul class="tags"><li>Python</li><li>LLM extraction</li><li>Calibration</li><li>pytest</li></ul>
                 </article>
                 <article class="card">
                     <h3>Analytics warehouse</h3>
-                    <p>
-                        The company's first real data substrate: ingestion, dbt staging and
-                        marts with enforced model contracts, executive-facing views, CI,
-                        and scheduled orchestration on managed infrastructure — delivered
-                        as infrastructure-as-code on Azure.
-                    </p>
-                    <p>
-                        Added historization to source systems that had none, turning
-                        point-in-time project data into a queryable time series and making
-                        schedule-slippage analysis possible for the first time.
-                    </p>
-                    <ul class="tags"><li>dbt</li><li>Prefect</li><li>Azure · Bicep</li><li>SQL</li></ul>
+                    <ul>
+                        <li>Ingestion → dbt staging/marts → executive-facing views. First data substrate at the company.</li>
+                        <li>Enforced dbt model contracts: a breaking schema change fails CI, not a dashboard.</li>
+                        <li>Snapshot + milestone fact tables add history to sources that only store current state. Enables schedule-slippage analysis.</li>
+                        <li>Prefect orchestration on a managed worker. Azure infrastructure from Bicep, including decommissioning an environment that wasn't earning its cost.</li>
+                    </ul>
+                    <ul class="tags"><li>dbt</li><li>SQL</li><li>Prefect</li><li>Azure</li><li>Bicep</li></ul>
                 </article>
                 <article class="card">
                     <h3>Lead-generation engine</h3>
-                    <p>
-                        Public parcel and assessment records → filtered building spine →
-                        firmographic matching → multi-gate qualification → buying-committee
-                        enrichment → ranked, contact-ready target list with per-row
-                        rationale. Every candidate passes adversarial verification before a
-                        human picks up a phone.
-                    </p>
-                    <p>
-                        Refactored from a script pile into a config-driven engine: entering
-                        a new market is a profile file plus reference data, no code change.
-                    </p>
-                    <ul class="tags"><li>Public-records pipelines</li><li>Adversarial verification</li><li>Config-driven design</li></ul>
+                    <ul>
+                        <li>Input: public parcel + assessment records. Output: ranked, contact-ready target list with per-row rationale.</li>
+                        <li>Pipeline: building-spine filter → address-level firmographic matching → multi-gate qualification → buying-committee enrichment.</li>
+                        <li>Delivered ~160 verified targets against a 150–200 ask. Adversarial verification removed ~40% of candidates as wrong or unverifiable before anyone made a call.</li>
+                        <li>Config-driven: a new market is a profile file plus reference data, zero code change. 71 tests. Output ships as a living tracker that upserts on re-run and never overwrites human-entered columns.</li>
+                    </ul>
+                    <ul class="tags"><li>Public records</li><li>Entity matching</li><li>Adversarial verification</li></ul>
                 </article>
                 <article class="card">
-                    <h3>Lesson-planning AI for Brilla Public Charter Schools</h3>
-                    <p>
-                        An AI layer for the network's ELA curriculum with two modes: a
-                        generator that turns a unit overview into a complete, teach-ready
-                        lesson plan grounded in the school's own teaching expectations, and
-                        a coach that walks a teacher through internalizing a plan in a
-                        multi-turn conversation before they step into the classroom.
-                    </p>
-                    <p>
-                        Engineered for real deployment economics: right-sized models per
-                        mode and prompt caching put full-school usage in the tens of
-                        dollars per month.
-                    </p>
-                    <ul class="tags"><li>Applied LLMs</li><li>Education</li><li>Prompt architecture</li></ul>
+                    <h3>Lesson-planning AI — Brilla Public Charter Schools</h3>
+                    <ul>
+                        <li>Mode 1: unit overview + lesson number → complete, teach-ready lesson plan grounded in the network's curriculum and teaching expectations.</li>
+                        <li>Mode 2: multi-turn coaching that walks a teacher through internalizing a plan before class.</li>
+                        <li>Per-mode model selection + prompt caching: ~$0.05 per generated plan; full-school usage projected at tens of dollars per month.</li>
+                    </ul>
+                    <ul class="tags"><li>LLM generation</li><li>Prompt architecture</li><li>Education</li></ul>
                 </article>
                 <article class="card">
-                    <h3>Knowledge platform &amp; MCP server</h3>
-                    <p>
-                        A retrieval-backed knowledge base with per-user access isolation
-                        plus a shared organizational tier — delivered into staff members'
-                        existing AI assistants rather than a new app they'd have to
-                        remember to open.
-                    </p>
-                    <p>
-                        Grounding and identifier guards took fabrications from 4 to 0 on a
-                        fixed evaluation. A shared MCP server exposes internal data and
-                        tooling as typed tools, with local and hosted OAuth entrypoints.
-                    </p>
-                    <ul class="tags"><li>RAG</li><li>MCP</li><li>Access control</li></ul>
+                    <h3>Knowledge platform + MCP server</h3>
+                    <ul>
+                        <li>Retrieval-backed knowledge base: per-user row-level isolation plus a shared organizational tier.</li>
+                        <li>Delivered inside staff members' existing AI assistants — no new app to open. Multiple pilot users live.</li>
+                        <li>Fabrications on a fixed eval: 4 → 0, via an explicit grounding rule and identifier guards. Quality gate fails on omissions, not just inventions.</li>
+                        <li>Shared MCP server exposes internal data and tooling as typed tools; stdio and hosted OAuth entrypoints.</li>
+                    </ul>
+                    <ul class="tags"><li>RAG</li><li>MCP</li><li>Row-level security</li></ul>
                 </article>
             </div>
         </section>
 
         <section id="projects" class="section">
-            <h2><span class="section-num">03</span> Research &amp; projects</h2>
+            <h2><span class="section-num">02</span> Research &amp; projects</h2>
             <div class="card-grid">
                 <article class="card card-featured">
                     <h3>Autonomous MTG Arena agent</h3>
-                    <p>
-                        An ongoing harness for LLM-driven play of Magic: The Gathering
-                        Arena — widely cited as the most complex commercial game ever made.
-                        A vision-based perceive/decide/execute loop drives the real client
-                        across a fleet of VMs: template matching and OCR for perception,
-                        typed decision requests for the model, verified actuation for every
-                        click.
-                    </p>
-                    <p>
-                        The project doubles as a lab for agent-engineering practice:
-                        adversarial multi-agent verification, log-first diagnosis, and
-                        evaluation gates on every mechanic before it ships.
-                    </p>
-                    <ul class="tags"><li>LLM agents</li><li>Computer vision</li><li>Private repo — writeup on request</li></ul>
+                    <ul>
+                        <li>Harness for LLM-driven play of Magic: The Gathering Arena against the real game client. MTG is provably Turing-complete; press coverage calls it the most complex commercial game measured.</li>
+                        <li>Loop: perceive (template matching + OCR on frames) → decide (typed DecisionRequest to the model) → execute (verified clicks). Deterministic actuation; model only makes game decisions.</li>
+                        <li>Runs on a fleet of VMware VMs with a health sensor that classifies nodes CRASH / WEDGE / ANOMALY / CRAWL / HEALTHY.</li>
+                        <li>Engineering practice: log-first diagnosis over vision, per-mechanic eval gates, adversarial multi-agent code review.</li>
+                    </ul>
+                    <ul class="tags"><li>LLM agents</li><li>Computer vision</li><li>Python</li><li>Private repo — writeup on request</li></ul>
                 </article>
                 <article class="card">
                     <h3>MTG analytics research</h3>
-                    <p>
-                        A body of published data research on Magic: The Gathering,
-                        including a mana-efficiency study across 4.7 million games, the
-                        16-vs-17-lands question in Limited, a Curve Score deck metric, and
-                        Mana Bug — a downloadable app that analyzes your own Arena logs.
-                    </p>
+                    <ul>
+                        <li>Mana-efficiency study over 4.7M games of 17Lands data: correlation between mana spent and win rate.</li>
+                        <li>16 vs 17 lands in Limited; Curve Score deck metric; player-skill vs rank-distribution study.</li>
+                        <li>Mana Bug: downloadable app that computes the metrics from your own Arena log files.</li>
+                    </ul>
                     <ul class="tags"><li>17Lands data</li><li>Statistical modeling</li></ul>
-                    <p class="card-links"><a href="https://jackjosephwright.github.io/mtg_main_page/" target="_blank" rel="noopener">Explore the research hub →</a></p>
+                    <p class="card-links"><a href="https://jackjosephwright.github.io/mtg_main_page/" target="_blank" rel="noopener">Research hub →</a></p>
                 </article>
                 <article class="card">
                     <h3>Narrative Tree Complexity Metric</h3>
-                    <p>
-                        Collaboration with a psychology research group at the CUNY Graduate
-                        Center: expert pairwise comparisons of interactive-narrative trees,
-                        modeled with supervised and unsupervised learning into a complexity
-                        metric for new data. Co-author on the resulting paper.
-                    </p>
+                    <ul>
+                        <li>With a psychology research group at the CUNY Graduate Center; co-author on the paper.</li>
+                        <li>Method: expert pairwise comparisons of interactive-narrative trees → complexity hierarchy → supervised + unsupervised models that score new trees.</li>
+                    </ul>
                     <ul class="tags"><li>Research</li><li>ML modeling</li></ul>
                     <p class="card-links">
                         <a href="https://rpubs.com/JackJWright/902090" target="_blank" rel="noopener">Paper →</a>
                         <a href="https://vimeo.com/706364815/0112a4ac2b" target="_blank" rel="noopener">Presentation →</a>
                     </p>
                 </article>
-                <article class="card">
-                    <h3>Claude Code setup</h3>
-                    <p>
-                        My personal agentic-coding environment, in public: engineering
-                        principles, memory-system discipline, and the conventions I've
-                        converged on after daily use of LLM coding agents.
-                    </p>
-                    <ul class="tags"><li>Agent workflows</li><li>Open source</li></ul>
-                    <p class="card-links"><a href="https://github.com/JackJosephWright/claude-code-setup" target="_blank" rel="noopener">View the repo →</a></p>
-                </article>
             </div>
             <details class="earlier">
                 <summary>Earlier work</summary>
                 <ul>
-                    <li><a href="https://jwrightzz123.shinyapps.io/regression_decision_tree/" target="_blank" rel="noopener">Linear regression tool</a> — a Shiny app that walks users through building and analyzing multiple and logistic regression on their own data.</li>
+                    <li><a href="https://jwrightzz123.shinyapps.io/regression_decision_tree/" target="_blank" rel="noopener">Linear regression tool</a> — Shiny app: upload a dataset, step through multiple/logistic regression.</li>
                     <li><a href="https://jackjosephwright.github.io/qb_markov.github.io/" target="_blank" rel="noopener">NFL quarterback performance</a> — Markov-chain simulation of career expected points added.</li>
-                    <li><a href="https://jackjosephwright.github.io/google_gstore_site/" target="_blank" rel="noopener">Google Gstore revenue prediction</a> — Kaggle team project with an emphasis on technical writing.</li>
-                    <li><a href="https://colab.research.google.com/drive/1neNd_mLNR8YD1fWQYkFfFXHmzvEbHQxm?usp=sharing" target="_blank" rel="noopener">Audio downsampling</a> — signal-engineering fix for a phasing issue in a Hammond B-3 virtual instrument.</li>
+                    <li><a href="https://jackjosephwright.github.io/google_gstore_site/" target="_blank" rel="noopener">Google Gstore revenue prediction</a> — Kaggle team project; technical writing sample.</li>
+                    <li><a href="https://colab.research.google.com/drive/1neNd_mLNR8YD1fWQYkFfFXHmzvEbHQxm?usp=sharing" target="_blank" rel="noopener">Audio downsampling</a> — sample-rate standardization to fix phasing in a Hammond B-3 virtual instrument.</li>
                 </ul>
             </details>
         </section>
 
         <section id="how" class="section">
-            <h2><span class="section-num">04</span> How I work</h2>
+            <h2><span class="section-num">03</span> Methods</h2>
             <div class="principles">
                 <div class="principle">
-                    <h3>End-to-end, alone if needed</h3>
-                    <p>Substrate, model layer, interface, and the stakeholder conversation that gets it adopted.</p>
+                    <h3>Deterministic rules / model judgment split</h3>
+                    <p>Rules that must be auditable become tested code. Only genuinely semantic work goes to a model. Cuts cost and error rate.</p>
                 </div>
                 <div class="principle">
-                    <h3>Evaluation by default</h3>
-                    <p>Graded answer keys, regression runs, negative controls — quality claims are numbers, not adjectives.</p>
+                    <h3>Evaluation as a build gate</h3>
+                    <p>Graded answer keys, regression runs, negative controls. A change that fixes one case and breaks another is visible before it ships.</p>
                 </div>
                 <div class="principle">
-                    <h3>Meet people in their tools</h3>
-                    <p>Deliver into what the user already has rather than asking them to adopt something new.</p>
+                    <h3>Adversarial verification</h3>
+                    <p>Independent refute-by-default reviewers over every candidate finding. Perspective-diverse verifiers beat redundant ones.</p>
+                </div>
+                <div class="principle">
+                    <h3>Deliver into existing tools</h3>
+                    <p>Ship into what the user already opens. End-to-end scope: substrate, model layer, interface, adoption.</p>
                 </div>
             </div>
         </section>
 
         <section id="skills" class="section">
-            <h2><span class="section-num">05</span> Skills</h2>
+            <h2><span class="section-num">04</span> Skills</h2>
             <div class="skill-groups">
                 <div class="skill-group">
                     <h3>AI / agent engineering</h3>
