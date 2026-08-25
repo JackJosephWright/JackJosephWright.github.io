@@ -123,8 +123,8 @@
                     <ul class="tags"><li>LLM agents</li><li>Computer vision</li><li>Python</li><li>Private repo</li></ul>
                     <p class="card-links">
                         <a href="writing/mtga-agent.html">Architecture →</a>
-                        <a href="writing/wedge-detection.html">Reliability →</a>
-                        <a href="writing/win-prob.html">Win-probability research →</a>
+                        <a href="writing/brain.html">The LLM pilot →</a>
+                        <a href="writing/win-prob.html">Data research →</a>
                     </p>
                 </article>
                 <article class="card">
@@ -196,35 +196,35 @@
 
         <section id="writing" class="section">
             <h2><span class="section-num">04</span> Writing</h2>
-            <p class="section-note">System writeups: problem, interface, pipeline, evaluation, limitations.</p>
+            <p class="section-note">What I built, and the parts that were actually interesting.</p>
             <ul class="writing-list">
                 <li>
-                    <a href="writing/mtga-agent.html">Architecture of an LLM agent that plays Magic: The Gathering Arena</a>
-                    <p>Optimal play in Magic is at least as hard as the Halting Problem. How the game client makes that tractable, why reading the game log instead of the screen cut computer vision down to five primitives, and how every reported success gets checked against the engine before it counts.</p>
+                    <a href="writing/mtga-agent.html">An LLM that plays Magic: The Gathering Arena</a>
+                    <p>Optimal play in Magic is provably at least as hard as the Halting Problem. Why that doesn't matter, why the game log made the vision layer almost disappear, and why a click that reports success usually didn't work.</p>
                 </li>
                 <li>
-                    <a href="writing/wedge-detection.html">Detecting stuck bots that report success</a>
-                    <p>Failure modes on an unattended VM fleet where every health signal reads green: an idle timeout that could never fire, a probe that classified a downed machine as the healthiest one, and a livelock that logged 2,089 consecutive successes over several days.</p>
+                    <a href="writing/brain.html">An LLM refused to block 97% of the time</a>
+                    <p>A naive pilot reached 49% against Arena's own AI for three cents a game, then declined to block on 268 of 276 chances. It wasn't bad at combat — power and toughness appeared in zero of 4,201 prompts.</p>
                 </li>
                 <li>
-                    <a href="writing/dataset-validation.html">Data validation on a 5.1M-game Magic dataset</a>
-                    <p>Eight ways a public game-log dataset produces wrong numbers without raising an error, three of which reached a shipped table — including a non-card that shipped as a card with an 18-point win-rate outlier, and 23 cards that read as never having been cast while showing 393,800 battlefield sightings.</p>
+                    <a href="writing/win-prob.html">What predicts winning in Magic: 5.1M games</a>
+                    <p>Rearranging the same numbers beat adding new ones by 71%. Rarity and mana cost explain 3% of how good a card is. And nothing you can see in a snapshot can price an attack.</p>
                 </li>
                 <li>
-                    <a href="writing/win-prob.html">What predicts winning in Magic: 5.1M games analysed</a>
-                    <p>An empirical study over 5.1M games. Re-aggregating the same features beat adding new ones by 71%, card face attributes explain 3% of card quality, static state cannot price an attack at all, and a value function conditioned on the wrong event teaches a bot to hoard.</p>
+                    <a href="writing/dataset-validation.html">Errors hiding in a 5.1M-game dataset</a>
+                    <p>A card that isn't a card, shipped with an 18-point win-rate outlier. 23 cards that were never once cast but kept turning up on the battlefield. And a join proved correct by arithmetic instead of inspection.</p>
                 </li>
                 <li>
-                    <a href="writing/contract-reconciliation-engine.html">Contract obligation reconciliation engine</a>
-                    <p>500+ obligations extracted per agreement and reconciled against a template. Deterministic/model boundary, ~150 tested rule functions, 92% gap recall at 0% false positives, and four silent parse defects found during build.</p>
+                    <a href="writing/lesson-plan-generator.html">Generating a school year's reading curriculum</a>
+                    <p>900 lesson plans across nine grade levels, every quotation verbatim from the real book, every lesson attacked by a teacher before it reached a classroom.</p>
                 </li>
                 <li>
-                    <a href="writing/lead-generation-engine.html">Lead generation engine from public records</a>
-                    <p>Parcel records to a ranked, contact-ready target list. Adversarial verification removing ~40% of candidates, a funnel leakage audit that recovered ~75 leads, and the refactor that made a new market a config file.</p>
+                    <a href="writing/contract-reconciliation-engine.html">Reading 500 obligations out of a contract</a>
+                    <p>92% gap recall at zero false positives — and the rubric that reported a clean bill of health because it couldn't see the number that had doubled.</p>
                 </li>
                 <li>
-                    <a href="writing/lesson-plan-generator.html">Lesson plan generator with quote grounding</a>
-                    <p>In deployment as the current school year's K–8 reading curriculum: 900 lessons across 36 units, every one human-reviewed. The five-strategy extraction cascade and its guards, verbatim quote grounding with source offsets, grade-level conditioning for at-level plans, and teacher adversarial review as correction signal.</p>
+                    <a href="writing/lead-generation-engine.html">Finding sales targets in public property records</a>
+                    <p>Parcel data to 160 contact-ready targets. Asking the model to refute rather than confirm killed 40% of candidates before anyone made a call.</p>
                 </li>
             </ul>
         </section>

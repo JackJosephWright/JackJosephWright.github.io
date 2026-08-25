@@ -3,10 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Data validation on a 5.1M-game Magic dataset — Jack Wright</title>
-    <meta name="description" content="Eight ways a public game-log dataset produces wrong numbers, three bugs that reached a shipped table, and the shrinkage and join-verification methods used to catch them.">
-    <meta property="og:title" content="Data validation on a 5.1M-game Magic dataset">
-    <meta property="og:description" content="Eight ways a public game-log dataset produces wrong numbers, and the three bugs that reached a shipped table.">
+    <title>Errors hiding in a 5.1M-game dataset — Jack Wright</title>
+    <meta name="description" content="A card that isn't a card, 23 cards that were never cast but kept showing up on the battlefield, and a join proved correct by arithmetic.">
+    <meta property="og:title" content="Errors hiding in a 5.1M-game dataset">
+    <meta property="og:description" content="A card that isn't a card, 23 cards that were never cast but kept appearing on the battlefield.">
     <meta property="og:type" content="article">
     <meta name="twitter:card" content="summary">
     <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='18' fill='%23b4560e'/%3E%3Ctext x='50' y='68' font-size='52' font-family='Georgia,serif' font-weight='bold' fill='white' text-anchor='middle'%3EJW%3C/text%3E%3C/svg%3E">
@@ -18,321 +18,115 @@
 <body>
     <article class="post">
         <p class="post-back"><a href="../index.html#writing">← Writing</a></p>
-        <h1>Data validation on a 5.1M-game Magic dataset</h1>
+        <h1>Errors hiding in a 5.1M-game dataset</h1>
 
         <dl class="spec">
-            <dt>Data</dt><dd>Public 17lands replay exports. 7 sets, 5,109,204 games, 31.4M card episodes</dd>
-            <dt>Role</dt><dd>Sole engineer</dd>
-            <dt>Output</dt><dd>A dataset contract documenting 8 traps, each with the measurement that establishes it</dd>
-            <dt>Tests</dt><dd>137 unit tests across five builder modules</dd>
+            <dt>Data</dt><dd>Public 17lands replay exports. 7 sets, 5.1M games, 31.4M card episodes.</dd>
+            <dt>Output</dt><dd>A dataset contract: every trap recorded with the measurement that proves it</dd>
         </dl>
 
-        <h2>Why this exists</h2>
+        <h2>None of these raise an error</h2>
         <p>
-            The dataset is a per-game snapshot log: for every turn of every game, what was
-            in each player's hand, on each board, what was cast, what died. It is generous
-            and well documented, and it is also full of encodings that look like one thing
-            and mean another.
-        </p>
-        <p>
-            Every item below silently produced, or nearly produced, a wrong number in this
-            project. None of them raise an error. Each is recorded with the measurement
-            that established it and the sample size, so the claim can be rechecked rather
-            than trusted.
+            The dataset is generous and well documented. It is also full of encodings that
+            look like one thing and mean another. Every item below quietly produced a wrong
+            number before it was caught, and three of them reached a published table.
         </p>
 
-        <h2>Trap 1: the last row of every game is fake, but only on the draw</h2>
+        <h2>A card that isn't a card</h2>
         <p>
-            The final snapshot in game order is a zeroed "game over" record — no cards, no
-            board, both life totals at zero — carrying the game's real outcome. Because
-            snapshot ordering depends on who went first, it lands on the opponent's slot
-            when you are on the play and on <em>your</em> slot when you are on the draw.
+            Real card identifiers start at 6873. Below that are engine sentinels, and one of
+            them means "hidden or unknown card." It shipped in my table as though it were a
+            card: 14,884 games, a 73% win rate against a 55% baseline. An 18-point outlier
+            that was not a card at all.
         </p>
-        <table>
-            <tr><th>Arm</th><th>Share of your turn rows that are this sentinel</th><th>At turn 12</th></tr>
-            <tr><td>On the play</td><td>0.00% (5 of 262,385)</td><td>0.00%</td></tr>
-            <tr><td>On the draw</td><td>5.04% (13,305 of 263,842)</td><td>21.7%</td></tr>
-        </table>
         <p>
-            These are zero-state rows labelled with a win or a loss, and they are
-            asymmetric by arm, so they do not average out. Past the end of a game, life
-            columns also read 0.0 for both players forever, so an unclamped loop sees both
-            players dead for the tail of every game.
+            The second-order damage was worse than the bad row. Card win rates get shrunk
+            toward a prior estimated from the other cards, so the fake card was also
+            distorting the estimates of every real card around it.
         </p>
 
-        <h2>Trap 2: some card IDs are not cards</h2>
+        <h2>23 cards that were never cast and kept appearing anyway</h2>
         <p>
-            Real card identifiers start at 6873. Below that are engine sentinels. The one
-            that mattered is <code>-1</code>, meaning "hidden or unknown card." It is rare
-            in most sets and roughly fifty times more common in one of them.
+            Split cards — one card, two halves — record the <em>half</em> that was cast in
+            the cast columns, and the <em>whole card</em> everywhere else. Different
+            identifiers. They never join.
         </p>
         <p>
-            A different sentinel represents the opponent's face-down creature. It accounts
-            for <strong>8.95%</strong> of opponent battlefield creature entries, appears in
-            attack and block columns, and never appears in any cast column — which is how
-            its meaning was established rather than assumed.
-        </p>
-        <p>
-            Tokens are <em>not</em> sentinels. They are real high-numbered identifiers that
-            resolve in the card index, and they make up around 13% of creature-zone
-            entries.
+            The visible symptom: all 23 Rooms in one set showed 393,800 sightings on the
+            battlefield and exactly zero casts. Nobody ever cast them; they simply appeared.
+            That accounted for 7% of the set's entire cast volume, and fixing the join
+            recovered 904,368 games' worth of casts.
         </p>
 
-        <h2>Trap 3: zones are assigned by current characteristics, not printed type</h2>
+        <h2>Zones describe what something is now, not what it was printed as</h2>
         <p>
-            A face-down creature logs its <em>true</em> identifier in the creature column.
-            So 3.91% of your creature entries are printed lands and 1.35% are printed
-            instants and sorceries. "On the battlefield" for a sorcery means it was a
-            face-down 2/2, not that its effect was in play.
+            A face-down creature logs its true identity in the creature column. So about 4%
+            of "your creatures" are printed lands and 1.4% are printed instants and
+            sorceries. A sorcery being "on the battlefield" means it was face-down as a 2/2,
+            not that its effect was somehow in play.
         </p>
         <p>
-            The consequence is that the land and creature columns are not disjoint by
-            identifier: 335 of 481 distinct land identifiers in one set also appear in the
-            creature column. Any code that unions zones into a set collapses about 0.9% of
-            entries.
-        </p>
-
-        <h2>Trap 4: split cards use different IDs in different columns</h2>
-        <p>
-            Cast columns record the identifier of the <em>half</em> that was cast. Hand and
-            battlefield columns record the identifier of the <em>whole card</em>. Without
-            canonicalisation the two never join.
-        </p>
-        <table>
-            <tr><th>Set</th><th>Orphaned cast observations</th><th>Share of that set's cast volume</th></tr>
-            <tr><td>DSK</td><td>732,767</td><td>7.13%</td></tr>
-            <tr><td>TDM</td><td>99,423</td><td>1.51%</td></tr>
-            <tr><td>FIN</td><td>16,474</td><td>0.20%</td></tr>
-        </table>
-        <p>
-            Uncanonicalised, all 23 Rooms in one set read as never having been cast, while
-            simultaneously showing 393,800 battlefield observations. Non-creature spells
-            appeared to resolve only 46.4% of the time.
+            Which also means the land and creature columns overlap — in one set, 335 of 481
+            land identifiers also appear as creatures. Any code that treats zones as
+            disjoint quietly loses about 1% of everything.
         </p>
 
-        <h2>Trap 5: one card is many IDs</h2>
+        <h2>Negative damage is correct</h2>
         <p>
-            Identifiers are per art printing. Keying on them splits a single card into
-            several rows with separate sample sizes — a basic land landed at both extremes
-            of one ranking at the same time. Folding to card name raised the share of
-            between-card variance that is real signal from 33% to 51%.
-        </p>
-        <p>
-            The same applies to tokens. One set has five different Clue identifiers
-            spanning eight points of win rate. Across thirteen multi-variant token names,
-            variation <em>within</em> a name is 5.36 points against 8.89 points between
-            names, so roughly a third of apparent token value is really "which card made
-            it."
+            The combat damage column sometimes goes negative, as low as −78. It is not
+            corrupt. It's a signed net life change from combat, so negative means that
+            player gained life — lifelink. Clamping it to zero, which is the reflex, deletes
+            the signal entirely.
         </p>
 
-        <h2>Trap 6: about 6% of the opponent's board has no identity</h2>
+        <h2>One card is many identifiers</h2>
         <p>
-            Just under 6% of opponent board entries carry no usable identifier, peaking at
-            7.45% around turn five. These are real objects that attack and block. Dropping
-            them undercounts the opponent's board; looking them up in a card-value table is
-            undefined.
-        </p>
-        <p>
-            They also carry no printed stats, which means printed power and toughness sums
-            undercount the opponent's board about 3.5 points more often than they undercount
-            yours. A model comparing the two boards inherits that asymmetry.
+            Identifiers are per art printing, so a single card splits into several rows with
+            separate sample sizes. A basic land managed to appear at both the top and the
+            bottom of the same ranking. Folding by card name raised the share of
+            between-card variation that is real signal from 33% to 51%.
         </p>
 
-        <h2>Trap 7: negative combat damage is correct</h2>
+        <h2>Proving a join is right with arithmetic instead of inspection</h2>
         <p>
-            The combat damage column occasionally goes negative, with values as low as −78.
-            It is not corruption. It is a signed net life change from combat, so negative
-            means that player gained life — lifelink. The segment life change matches the
-            column exactly 92.5% of the time overall and 95.3% excluding each game's final
-            segment.
+            A newer dataset pairs each expert player's turn with the board state immediately
+            before it, across 10.8M turns. Picking the right preceding snapshot depends on
+            who went first, and getting it wrong is silent — the rows still look reasonable,
+            except the "before" state now contains that turn's own actions.
         </p>
         <p>
-            Clamping negatives to zero, which is the obvious defensive move, deletes the
-            lifelink signal entirely.
+            The check doesn't require reading any rows. When your turn <em>T</em> starts you
+            have taken exactly <em>T−1</em> turns, so you cannot have more than <em>T−1</em>
+            lands. The correct join predicts exactly 1 land at turn two; the two wrong ones
+            predict 0 and 2. Measured across 800,000 turns, both cases read exactly 1.00, at
+            100% agreement.
         </p>
-
-        <h2>Trap 8: ability columns are not card IDs</h2>
         <p>
-            Ability firings are logged with their own identifier space. Not one of 547,448
-            firings in one set coincides with any card identifier the player held, cast, or
-            had on board. The mapping from ability to source card had to be built
-            empirically by co-occurrence, which resolves 83% of firings to a single source
-            at high confidence, and it has to be rebuilt per set.
-        </p>
-
-        <h2>Three bugs that reached a shipped table</h2>
-        <p>
-            These were found by auditing the schema against what the builder assumed rather
-            than by anything failing.
-        </p>
-        <table>
-            <tr><th>Bug</th><th>Effect</th></tr>
-            <tr>
-                <td>Engine sentinels emitted as real cards</td>
-                <td>The <code>-1</code> "card" shipped with 14,884 games at a 0.730 win rate against a 0.550 base — an 18-point phantom outlier. It was also feeding the shrinkage priors of every real card around it, so the damage was not confined to its own row.</td>
-            </tr>
-            <tr>
-                <td>Split-face casts never joining</td>
-                <td>7.13% of one set's cast volume orphaned. Fixing the join recovered 904,368 cast-games across 23 cards.</td>
-            </tr>
-            <tr>
-                <td>Instants and sorceries in the battlefield table</td>
-                <td>A spell cannot be on the battlefield; 100% of these arrived via the face-down manifest path in Trap 3. Their between-card variance measured 0–11% real signal — almost pure noise being published as data.</td>
-            </tr>
-        </table>
-        <p>
-            The fixes were applied at aggregation time. Because the per-set intermediate
-            counts were complete and correct, the table rebuilt from cache with no re-scan
-            of the source data.
+            A second check came free. In later turns the rule loosens as players miss land
+            drops, and it loosens <em>more</em> for the player who went first — which is what
+            card advantage predicts, since the player on the draw has seen an extra card. A
+            swapped join reverses the sign of that gap.
         </p>
 
-        <h2>Shrinkage, and why one parameter was not enough</h2>
+        <h2>A finding that killed what it was built for</h2>
         <p>
-            Per-card win rates at the turn level are thin — a few hundred observations per
-            cell — so raw rates are dominated by sampling noise at the extremes. Two
-            empirical-Bayes estimators handle this, both fit by method of moments because
-            the accumulators are exact integers and no likelihood surface needs searching.
+            That expert dataset was meant to produce a benchmark: situations where strong
+            players overwhelmingly agree, used as a regression test. Measuring the agreement
+            distribution first showed why it wasn't worth having.
         </p>
         <p>
-            Card win rates shrink in two stages: each card toward its set's base rate, then
-            each card-turn cell toward that card's own shrunk rate. The concentration
-            parameter for the second stage is fit on <em>within-card</em> deviations. Fitting
-            it on raw cell rates would fold in the much larger between-card variance,
-            overstate the spread, and under-shrink every cell.
-        </p>
-        <p>
-            The parameter is also fit separately per quantity, and the two stages move in
-            opposite directions:
-        </p>
-        <table>
-            <tr><th>Quantity</th><th>Card-level concentration</th><th>Cell-level concentration</th></tr>
-            <tr><td>Card in hand</td><td>226–309</td><td>60–104</td></tr>
-            <tr><td>Card on board</td><td>47–94</td><td>79–128</td></tr>
-            <tr><td>Card cast this turn</td><td>58–88</td><td>126–188</td></tr>
-        </table>
-        <p>
-            Cards differ far more from each other once you condition on casting or on
-            survival, so those quantities shrink less at card level. Within a single card,
-            the turn dimension carries more real spread for a card sitting in hand than for
-            one being cast, whose observations cluster near its mana cost. A single shared
-            parameter would over-shrink one quantity while under-shrinking another.
+            Only 11% of expert decisions land in the high-agreement band, and that band
+            contains no partial attacks at all. Attacking with everything, or not attacking,
+            is usually forced by the board. Choosing <em>which three of five</em> creatures
+            attack is the actual judgment, and it never concentrates. Filtering for consensus
+            collects exactly the decisions that were never in doubt. The benchmark was
+            deleted and the measurement kept as the reason.
         </p>
 
-        <h2>The survivorship gap, predicted before it was measured</h2>
         <p>
-            Win rates conditioned on a card being <em>on the board</em> are survivorship
-            filtered — the card is only observed in games where it lived long enough to be
-            seen. The size of that effect was registered as a prediction before measuring,
-            so a null or negative result would have indicated a bug in the pipeline rather
-            than an interesting finding.
+            The modelling built on this data is <a href="win-prob.html">written up
+            separately</a>.
         </p>
-        <p>
-            Paired on the same card, set, and turn across 15,504 cells, on-board win rates
-            run <strong>3.6 points above in-hand</strong>, positive in 65.8% of pairs. That
-            is the confound, and it is the reason board presence is usable as a state
-            readout and not as a signal about whether casting the card was a good idea.
-        </p>
-
-        <h2>Measuring how long a card survives</h2>
-        <p>
-            A separate table measures fragility: how many turn cycles a card lasts after it
-            appears, capped at four. Roughly 40% of observations are censored by the game
-            ending first, and the censoring time is averaged in rather than modelled, so
-            this is not a Kaplan-Meier restricted mean and is labelled accordingly. The
-            bias is known and stated: cards that tend to arrive late read as shorter-lived
-            than they are.
-        </p>
-        <p>
-            Between-card differences are 98–99.9% real signal across all seven sets. The
-            correlations are mechanically sensible, which is the main evidence that the
-            measurement works: survival is negatively correlated with mana cost and with
-            power, and positively correlated with toughness exceeding power. Fragile cards
-            are large cheap-to-answer attackers; durable cards are defensive statlines.
-        </p>
-        <p>
-            One caveat found while writing this up, and worth stating because the shipped
-            table does not enforce it: the death columns only ever contain creatures, so any
-            row whose printed type is not a creature can never have an episode closed. About
-            a quarter of rows — tokens, lands, spells, artifacts — are structurally
-            unkillable, and their "survival" is pure censoring time. They accumulate at the
-            durable end of the ranking and have to be filtered out before the table is read.
-        </p>
-
-        <h2>Proving a join is right using an invariant</h2>
-        <p>
-            A newer dataset pairs each of an expert player's turns with the board state
-            immediately before it — 10.8M turn cycles drawn from 1.18M games played by
-            highly ranked drafters. Building it requires selecting the correct preceding
-            snapshot, and that rule differs depending on who went first. Getting it wrong is
-            silent: the rows still look plausible, and a wrong join leaks the turn's own
-            actions into the state that is supposed to precede them.
-        </p>
-        <p>
-            The check is an invariant rather than a spot inspection. When your turn
-            <em>T</em> begins, you have completed exactly <em>T−1</em> turns, so the
-            pre-state can never contain more than <em>T−1</em> lands. The three candidate
-            join rules predict different values at turn two: the correct one predicts
-            exactly 1, and the two wrong ones predict 0 and 2. Measured over 800,000 turn
-            cycles, both arms read exactly 1.00, at 100.0% exact agreement.
-        </p>
-        <p>
-            A second check falls out of the same measurement. By later turns the invariant
-            loosens as players miss land drops, and the decay is larger for the player who
-            went first — which is what card advantage predicts, since the player on the draw
-            has seen an extra card. A swapped join reverses the sign of that gap, so the
-            decay pattern independently confirms the join.
-        </p>
-
-        <h2>A finding that killed its own deliverable</h2>
-        <p>
-            The expert dataset was meant to produce a benchmark: situations where experts
-            overwhelmingly agree on the action, used as a regression test for the agent. A
-            first version emitted 616 such questions.
-        </p>
-        <p>
-            Measuring the agreement distribution across 840,796 expert decisions showed why
-            that benchmark was not worth keeping:
-        </p>
-        <table>
-            <tr><th>Expert agreement</th><th>Share of decisions</th><th>Dominant action</th></tr>
-            <tr><td>80%+</td><td>11.4%</td><td>Develop, or attack with everything</td></tr>
-            <tr><td>60–80%</td><td>37.6%</td><td>Develop</td></tr>
-            <tr><td>40–60%</td><td>39.9%</td><td>Partial attack</td></tr>
-            <tr><td>Under 40%</td><td>11.1%</td><td>Partial attack</td></tr>
-        </table>
-        <p>
-            Only 11.4% of decision mass sits where experts agree, and that band contains no
-            partial attacks at all. Attacking with everything or holding back entirely is
-            usually forced by the board. Choosing <em>which three of five</em> creatures
-            attack is the actual judgement, and it never concentrates. A benchmark filtered
-            for consensus collects precisely the decisions that were never in doubt. The
-            deliverable was deleted, with the measurement kept as the reason.
-        </p>
-
-        <h2>What saturates and what does not</h2>
-        <p>
-            Sampling more of one set buys card coverage quickly and state coverage never.
-            At 10% of a single set, 256 of 275 cards already have enough observations; the
-            remaining 90% of the data adds seven more. State coverage does not converge — at
-            the full million games, sixteen previously unseen board configurations still
-            appear per ten thousand decisions.
-        </p>
-        <p>
-            The practical consequence is that breadth across formats beats depth within one.
-            Doubling the sample of a single set buys two more cards and about two points of
-            decision coverage. A new set buys roughly 275 new cards and a different
-            metagame.
-        </p>
-
-        <h2>Method notes</h2>
-        <ul>
-            <li>The exports are chronological. Sampling the first N rows trains on a format's opening days, when it is unsolved and players are worse. Sample by hashing the draft identifier.</li>
-            <li>Per-turn denominators are games that <em>reached</em> that turn. One set has 1,011,949 games reaching turn 1 and 148,907 reaching turn 12; using total games makes every per-turn average decay toward zero and look like a real decline.</li>
-            <li>Group by draft, not by row, when splitting for validation. Games from one draft share a deck.</li>
-            <li>Aggregates hide per-card effects. Every two-mana creature's board value decays with turn, and the curve pooled across all two-drops is flat.</li>
-            <li>State the denominator of a percentage. "Face attributes explain 93%" and "face attributes explain 3%" were both true of the same data, against different denominators, and the first version of this work published the wrong one.</li>
-            <li>The shipped tables publish raw counts and fitted priors alongside the shrunk values, so a consumer can re-fit shrinkage inside their own training fold. Using the published shrunk value directly as a model feature leaks.</li>
-        </ul>
 
         <p class="post-back post-back-end"><a href="../index.html#writing">← Writing</a></p>
     </article>

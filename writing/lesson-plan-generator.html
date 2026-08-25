@@ -3,10 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Lesson plan generator with quote grounding — Jack Wright</title>
-    <meta name="description" content="System writeup: unit overview to teach-ready lesson plan, with verbatim quote grounding against parsed source text and teacher adversarial review feeding back into generation.">
-    <meta property="og:title" content="Lesson plan generator with quote grounding">
-    <meta property="og:description" content="Unit overview to teach-ready lesson plan. Verbatim quote grounding and teacher adversarial review at scale.">
+    <title>Generating a school year's reading curriculum — Jack Wright</title>
+    <meta name="description" content="900 lesson plans across K-8, every quotation verbatim from the real book, every lesson reviewed by a teacher before it reached a classroom.">
+    <meta property="og:title" content="Generating a school year's reading curriculum">
+    <meta property="og:description" content="900 lesson plans across K-8, every quotation verbatim from the real book.">
     <meta property="og:type" content="article">
     <meta name="twitter:card" content="summary">
     <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='18' fill='%23b4560e'/%3E%3Ctext x='50' y='68' font-size='52' font-family='Georgia,serif' font-weight='bold' fill='white' text-anchor='middle'%3EJW%3C/text%3E%3C/svg%3E">
@@ -18,184 +18,79 @@
 <body>
     <article class="post">
         <p class="post-back"><a href="../index.html#writing">← Writing</a></p>
-        <h1>Lesson plan generator with quote grounding</h1>
+        <h1>Generating a school year's reading curriculum</h1>
 
         <dl class="spec">
-            <dt>Status</dt><dd>In deployment</dd>
-            <dt>Scope</dt><dd>The current school year's reading curriculum. Not a pilot corpus.</dd>
+            <dt>Status</dt><dd>In deployment. This is the live curriculum, not a pilot corpus.</dd>
+            <dt>Scale</dt><dd>900 lessons — 9 grade levels × 4 units × 25 lessons. All 900 reviewed and passed by a teacher.</dd>
+            <dt>Cost</dt><dd>~$0.05 per plan; full-school usage in the tens of dollars per month</dd>
             <dt>Role</dt><dd>Sole engineer</dd>
-            <dt>Stack</dt><dd>Python, Flask, SQLite, Claude Sonnet 4.5 / Haiku 4.5</dd>
-            <dt>Coverage</dt><dd>9 grade levels, K–8. Grade bands K–2, 3–5, 6–8</dd>
-            <dt>Volume</dt><dd>900 lessons. 9 grade levels × 4 units × 25 lessons = 36 units, 900 plans. All 900 human-reviewed and passed.</dd>
-            <dt>Sources</dt><dd>Purchased trade books and public-domain texts</dd>
         </dl>
 
-        <h2>Problem</h2>
+        <h2>The constraint that shapes everything</h2>
         <p>
-            Lesson planning for a knowledge-building ELA curriculum is time-intensive and
-            uneven in quality across a network. Teachers need plans that cite the source
-            text accurately, align to stated instructional expectations, and are ready to
-            teach without further preparation.
+            The hard requirement isn't plan quality in the abstract. It's that every passage
+            a plan quotes is genuinely in the book. A teacher reads it aloud, in front of a
+            class, against the real page. A plan that quotes approximately is worse than no
+            plan.
         </p>
         <p>
-            The output is not a demonstration corpus. The 36 units this system generated —
-            four per grade level across K–8 — are the reading curriculum for the current
-            school year, and the plans go into classrooms. That sets the accuracy bar
-            described below.
-        </p>
-
-        <h2>Interface</h2>
-        <table>
-            <tr><th>Mode 1 input</th><td>Unit overview, lesson number, grade band.</td></tr>
-            <tr><th>Mode 1 output</th><td>Complete teach-ready lesson plan against a fixed template.</td></tr>
-            <tr><th>Mode 2 input</th><td>An existing lesson plan the teacher is preparing to deliver.</td></tr>
-            <tr><th>Mode 2 output</th><td>Multi-turn internalization coaching conversation.</td></tr>
-        </table>
-
-        <h2>Core constraint: quote accuracy at scale</h2>
-        <p>
-            The binding requirement is not plan quality in the abstract. It is that every
-            passage a plan cites is a verbatim quotation from the actual text. A plan that
-            quotes a book approximately is unusable — the teacher reads it aloud in front
-            of a class, against the real page.
-        </p>
-        <p>
-            Model memory of a text is not an acceptable source. Source books are parsed
-            into chapters, chunked, and supplied to generation as context. Quotations are
-            drawn from supplied text, not recalled. This is the difference between a
-            system a teacher can carry into a classroom and a demo.
+            So the model is never asked to recall a text. Purchased books are parsed into
+            chapters, chunked, and supplied as context, and quotations come from the
+            supplied text. Chapters carry their position in the source, so any quotation
+            traces back to where it came from.
         </p>
 
-        <h2>Pipeline</h2>
-        <ol>
-            <li><strong>Extract.</strong> Purchased book text to structured chapters. Detailed below.</li>
-            <li><strong>Chunk.</strong> Chapters segmented into exactly <em>n</em> lesson-scale units, each carrying an index, a title, and a chapter reference.</li>
-            <li><strong>Distill.</strong> Per-chapter summaries and a quick pass over the full text.</li>
-            <li><strong>Overview.</strong> Unit overview generation — arc, virtue focus, standards alignment, lesson count.</li>
-            <li><strong>Generate.</strong> Lesson plan against the template, grounded in that lesson's chunk plus curriculum resources.</li>
-            <li><strong>Refine.</strong> Teacher-directed revision applied to a generated plan.</li>
-        </ol>
-
-        <h2>Extraction</h2>
+        <h2>Parsing books nobody formatted for you</h2>
         <p>
-            Source books arrive as unstructured text with no reliable format. A purchased
-            trade book, a public-domain transcription, and a scanned reader each mark
-            chapter boundaries differently, and getting boundaries wrong corrupts every
-            downstream quotation. Extraction is a cascade of parsing strategies, tried in
-            order; the first to yield two or more chapters wins, and the strategy that won
-            is recorded against the book.
-        </p>
-        <table>
-            <tr><th>#</th><th>Strategy</th><th>Detects</th></tr>
-            <tr><td>1</td><td>TOC-anchored</td><td>A CONTENTS block. Titles are read from it, then located in the body <em>after</em> the table of contents ends.</td></tr>
-            <tr><td>2</td><td>All-caps headings</td><td>Multi-word and single-word capitalized heading lines.</td></tr>
-            <tr><td>3</td><td>Chapter-N</td><td><code>CHAPTER</code>, <code>STORY</code>, or <code>PART</code> followed by an arabic or roman numeral.</td></tr>
-            <tr><td>4</td><td>Markdown</td><td><code>#</code> and <code>##</code> headings.</td></tr>
-            <tr><td>5</td><td>Single chapter</td><td>Whole text as one chapter. Always succeeds; guarantees the stage cannot hard-fail.</td></tr>
-        </table>
-
-        <h2>Extraction guards</h2>
-        <p>The failure mode that matters is not a crash. It is a parse that succeeds and is wrong.</p>
-        <table>
-            <tr><th>Guard</th><th>Prevents</th></tr>
-            <tr>
-                <td>A heading followed by fewer than 200 characters of prose is discarded</td>
-                <td>Table-of-contents lines and running heads registering as chapters</td>
-            </tr>
-            <tr>
-                <td>Duplicate titles resolve to their last occurrence</td>
-                <td>A chapter anchoring to its TOC entry rather than the chapter itself, which would truncate every chapter to the length of a TOC line</td>
-            </tr>
-            <tr>
-                <td>Chapters carry start and end offsets into the raw text</td>
-                <td>Untraceable quotations. Any cited passage resolves to a position in the source.</td>
-            </tr>
-            <tr>
-                <td>Chapter references resolve by normalized exact match, then substring</td>
-                <td>Brittle failure on punctuation and case differences between a lesson's reference and the book's own heading</td>
-            </tr>
-            <tr>
-                <td>A multi-reference lookup returns what matched; null only if nothing matched</td>
-                <td>One unmatched reference discarding the text of its matched siblings</td>
-            </tr>
-            <tr>
-                <td>Parse output persisted as JSON</td>
-                <td>Re-parsing on every generation. Downstream text extraction is programmatic and cheap.</td>
-            </tr>
-        </table>
-
-        <h2>Grade-level conditioning</h2>
-        <p>
-            Generation is conditioned on the specific grade level, not only the K–2 / 3–5 /
-            6–8 band. This is what makes the output at-level. Two grades inside one band
-            reading the same text receive different plans: vocabulary load, scaffolding,
-            and independent-practice expectations all shift by grade.
+            Source books arrive with no consistent structure. A purchased trade book, a
+            public-domain transcription and a scanned reader all mark chapters differently,
+            and getting the boundaries wrong corrupts every quotation downstream.
         </p>
         <p>
-            Nine grade levels therefore means nine sets of lessons, not three band-level
-            sets reused across grades. It is the reason the corpus is 900 plans rather
-            than 100, and the reason a teacher receives a plan pitched at the class in
-            front of them.
+            Extraction tries five strategies in order — a table of contents, all-caps
+            headings, "Chapter N" patterns, markdown headings, and finally treating the
+            whole text as one chapter so the stage can never hard-fail. The first strategy
+            that finds at least two chapters wins, and which one won is recorded.
         </p>
-
-        <h2>Grounding resources</h2>
         <p>
-            Generation is conditioned on the network's own instructional documents rather
-            than general pedagogical knowledge. Resources are stored records injected into
-            the prompt, not fine-tuned weights, so a change to an instructional norm takes
-            effect on the next run.
+            The interesting part is the guards, because the failure that matters is not a
+            crash but a parse that succeeds and is wrong:
         </p>
-        <table>
-            <tr><th>Resource</th><th>Function</th></tr>
-            <tr><td>Grade-level context</td><td>At-level pitch — vocabulary load, scaffolding, and practice expectations for the specific grade</td></tr>
-            <tr><td>Teaching expectations</td><td>Instructional norms the plan must conform to</td></tr>
-            <tr><td>Narration protocol</td><td>Core comprehension method</td></tr>
-            <tr><td>Socratic seminar protocol</td><td>Discussion structure</td></tr>
-            <tr><td>Virtue formation framework</td><td>Character objectives per lesson</td></tr>
-            <tr><td>Assessment and exit tickets</td><td>Formative assessment design</td></tr>
-        </table>
-
-        <h2>Human adversarial review</h2>
-        <p>
-            No generated lesson is used unreviewed. All 900 lessons were read by a human
-            reviewer and passed before entering the curriculum. Review is adversarial by
-            design: the reviewer's task is to attack the plan, not approve it.
-        </p>
-        <table>
-            <tr><th>Defect class</th><th>Example</th></tr>
-            <tr><td>Scaffolding slope</td><td>Independent practice escalating faster than the unit arc supports; early lessons requiring writing where drawing and oral narration belong</td></tr>
-            <tr><td>Arc placement</td><td>A summative writing task positioned mid-unit rather than as the culminating piece</td></tr>
-            <tr><td>Objective mismatch</td><td>A cited passage that does not support the stated comprehension objective</td></tr>
-            <tr><td>Quotation fidelity</td><td>Any passage not matching the source text verbatim</td></tr>
-        </table>
-        <p>
-            Corrections are captured against the specific lesson and retained. The review
-            record is the system's improvement signal: domain experts generate correction
-            data as a byproduct of doing their normal work, at a volume no single prompt
-            author could produce, and each pass raises the floor for the next generation
-            run. Reviewer time is spent on judgment rather than drafting — which is the
-            entire economic argument for the system.
-        </p>
-
-        <h2>Deployment economics</h2>
-        <table>
-            <tr><th>Operation</th><th>Model</th><th>Approximate cost</th></tr>
-            <tr><td>Lesson plan generation</td><td>Sonnet 4.5</td><td>$0.05 per plan</td></tr>
-            <tr><td>Internalization exchange</td><td>Haiku 4.5</td><td>$0.02 per exchange</td></tr>
-            <tr><td>Full-school usage</td><td>—</td><td>$50–70 per month with prompt caching</td></tr>
-        </table>
-        <p>
-            Mode 2 does not need the stronger model. Assigning models per mode rather than
-            per system is what puts network-wide deployment inside a budget that does not
-            require a procurement conversation.
-        </p>
-
-        <h2>Limitations</h2>
         <ul>
-            <li>36 units built to date — the current year's reading. Each additional unit requires the same extraction and full-review cycle.</li>
-            <li>Quote fidelity is bounded by extraction quality. A poorly digitized source degrades grounding before generation ever runs.</li>
-            <li>Every lesson requires human review to ship. Review is the throughput constraint, by design — the system reduces drafting cost, not approval cost.</li>
-            <li>Requires a machine-readable source text.</li>
+            <li>A heading followed by less than 200 characters of prose is discarded — that rejects table-of-contents lines and page headers, which otherwise register as chapters.</li>
+            <li>When a title appears twice, the later one wins. Otherwise a chapter anchors to its own table-of-contents entry, and every chapter truncates to the length of a single line.</li>
+            <li>A lookup for several chapters returns whatever matched rather than failing wholesale, so one unrecognised reference doesn't discard its siblings.</li>
+        </ul>
+
+        <h2>Grade level, not grade band</h2>
+        <p>
+            Plans are generated per grade, not per band. Two grades inside one band reading
+            the same book get different vocabulary load, scaffolding and independent
+            practice. That is the difference between a plan that is at-level and one that is
+            merely nearby, and it's why the corpus is 900 plans rather than 100.
+        </p>
+
+        <h2>Teachers attacking the output is the mechanism</h2>
+        <p>
+            No generated lesson is used unreviewed. All 900 were read and passed before
+            entering a classroom, and the reviewer's job is to attack the plan rather than
+            approve it — scaffolding that escalates faster than the unit supports, a writing
+            task in the wrong place in the arc, a passage that doesn't support the stated
+            objective.
+        </p>
+        <p>
+            Corrections are captured against the specific lesson. Domain experts produce
+            correction data as a side effect of doing their normal work, at a volume no
+            single prompt author could generate, and reviewer time goes to judgment instead
+            of drafting.
+        </p>
+
+        <h2>Limits</h2>
+        <ul>
+            <li>Quotation fidelity depends on the parse. A badly digitised source degrades grounding before generation runs at all.</li>
+            <li>Every lesson needs human review to ship. That's the throughput constraint by design — this reduces the cost of drafting, not of approving.</li>
+            <li>Four units per grade so far. Each new one costs the same extraction and full-review cycle.</li>
         </ul>
 
         <p class="post-back post-back-end"><a href="../index.html#writing">← Writing</a></p>

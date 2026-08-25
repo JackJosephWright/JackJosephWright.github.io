@@ -3,10 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Lead generation engine from public records — Jack Wright</title>
-    <meta name="description" content="System writeup: public parcel and assessment records to a ranked, contact-ready target list. Config-driven pipeline, adversarial verification, 71 tests.">
-    <meta property="og:title" content="Lead generation engine from public records">
-    <meta property="og:description" content="Public parcel records to a ranked, verified target list. Config-driven pipeline with adversarial verification.">
+    <title>Finding sales targets in public property records — Jack Wright</title>
+    <meta name="description" content="County parcel data to 160 verified, contact-ready targets, with 40% of candidates killed before anyone made a call.">
+    <meta property="og:title" content="Finding sales targets in public property records">
+    <meta property="og:description" content="County parcel data to 160 verified, contact-ready targets, with 40% of candidates killed before anyone called.">
     <meta property="og:type" content="article">
     <meta name="twitter:card" content="summary">
     <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='18' fill='%23b4560e'/%3E%3Ctext x='50' y='68' font-size='52' font-family='Georgia,serif' font-weight='bold' fill='white' text-anchor='middle'%3EJW%3C/text%3E%3C/svg%3E">
@@ -18,99 +18,71 @@
 <body>
     <article class="post">
         <p class="post-back"><a href="../index.html#writing">← Writing</a></p>
-        <h1>Lead generation engine from public records</h1>
+        <h1>Finding sales targets in public property records</h1>
 
         <dl class="spec">
             <dt>Status</dt><dd>Production, delivered</dd>
+            <dt>Result</dt><dd>~160 verified contact-ready targets against a 150–200 ask</dd>
             <dt>Role</dt><dd>Sole engineer</dd>
-            <dt>Stack</dt><dd>Python, public records ingest, commercial enrichment APIs, LLM verification</dd>
-            <dt>Tests</dt><dd>71</dd>
         </dl>
 
-        <h2>Problem</h2>
+        <h2>What it does</h2>
         <p>
-            Target identification was manual and did not scale to a new territory. The
-            requirement was a ranked list of qualified organizations with named contacts,
-            each row carrying a rationale a salesperson could read before making a call.
+            Public parcel and assessment records in, a ranked list of qualified
+            organisations with named contacts out, each row carrying the reasoning a
+            salesperson can read before picking up the phone. The pipeline filters records
+            down to candidate buildings, matches each address to the organisation occupying
+            it, applies qualification gates, then resolves the people worth contacting.
         </p>
 
-        <h2>Interface</h2>
-        <table>
-            <tr><th>Input</th><td>Public parcel and assessment records for the territory.</td></tr>
-            <tr><th>Input</th><td>Campaign profile — qualification thresholds, geography, reference data.</td></tr>
-            <tr><th>Output</th><td>Ranked target list. Organization, qualification evidence, buying-committee contacts, per-row rationale.</td></tr>
-            <tr><th>Output</th><td>Living tracker. Upserts on re-run; human-entered columns preserved.</td></tr>
-        </table>
-
-        <h2>Pipeline</h2>
-        <ol>
-            <li><strong>Building spine.</strong> Filter parcel and assessment records to candidate structures.</li>
-            <li><strong>Firmographic match.</strong> Address-level join from parcel to occupying organization.</li>
-            <li><strong>Qualification.</strong> Multi-gate filter. Gates compile from the campaign profile.</li>
-            <li><strong>Enrichment.</strong> Buying-committee contact resolution against commercial APIs.</li>
-            <li><strong>Verification.</strong> Adversarial pass over every candidate. Refute-by-default.</li>
-            <li><strong>Rank and emit.</strong> Scored list written to the tracker.</li>
-        </ol>
-
-        <h2>Verification design</h2>
+        <h2>Making the model argue against itself</h2>
         <p>
-            Candidates are checked by independent verifiers instructed to refute rather
-            than confirm, returning refuted when evidence is insufficient. Verifiers are
-            perspective-diverse rather than redundant — repeating one skeptic three times
-            reproduces one blind spot three times.
-        </p>
-        <table>
-            <tr><th>Measure</th><th>Value</th></tr>
-            <tr><td>Candidates removed as wrong or unverifiable</td><td>~40%</td></tr>
-            <tr><td>Verified targets delivered</td><td>~160</td></tr>
-            <tr><td>Requested volume</td><td>150–200</td></tr>
-        </table>
-
-        <h2>Funnel leakage audit</h2>
-        <p>
-            An audit of stage-to-stage counts identified a classification gate tuned too
-            tightly, discarding qualified records before enrichment. Widening the gate
-            recovered approximately 75 additional qualified leads — close to doubling the
-            list. Every recovered record was passed through the same adversarial
-            verification before delivery.
+            Ask a model "is this a real lead?" and it agrees with you. Ask it to
+            <em>refute</em> the lead, and tell it to return refuted when the evidence is
+            thin, and the survivors are worth acting on.
         </p>
         <p>
-            Detection method: conservation counts between adjacent stages. A stage that
-            silently drops records is invisible without them.
+            That killed about 40% of candidates as wrong or unverifiable before anyone made
+            a call. Which matters beyond the wasted time: a list where a third of the rows
+            are junk trains the sales team to stop trusting the list, and one bad batch can
+            end adoption of a system that's right most of the time.
+        </p>
+        <p>
+            The verifiers are given different angles rather than being run repeatedly.
+            Running the same skeptic three times reproduces the same blind spot three times.
         </p>
 
-        <h2>Configuration refactor</h2>
+        <h2>Counting what should be conserved</h2>
         <p>
-            Initial implementation was a script pile. It was restructured into a
-            config-driven engine: typed records, gates compiled from configuration, source
-            adapters behind one interface, a stage runner, and provenance manifests per
-            run.
+            An audit of the counts between stages found a qualification gate tuned too
+            tightly, discarding good records before they reached enrichment. Widening it
+            recovered roughly 75 more qualified leads — close to doubling the list — with
+            every recovered record put through the same adversarial check.
         </p>
-        <table>
-            <tr><th>Before</th><th>After</th></tr>
-            <tr><td>New market requires code changes</td><td>New market is a profile file plus reference data</td></tr>
-            <tr><td>No test coverage</td><td>71 tests</td></tr>
-            <tr><td>Reruns recompute everything</td><td>Expensive stages persist structured output; reruns load and recompute deltas</td></tr>
-        </table>
         <p>
-            Validation of the refactor: production output reproduced at zero API cost from
-            persisted artifacts. The first preflight against a new market configuration
-            failed on a genuine data gap rather than running on stale assumptions.
+            Nothing had failed. A stage that quietly drops records is invisible unless you
+            compare its output count against its input count, which is cheap and worth doing
+            at every stage.
         </p>
 
-        <h2>Delivery constraint</h2>
+        <h2>Shipping it as something people use</h2>
         <p>
-            The output is a working surface, not a report. The tracker upserts on re-run
-            and never overwrites human-entered columns, so sales annotations survive
-            regeneration and feed the next pull's qualification.
+            The output is a working surface rather than a report. It upserts on re-run and
+            never overwrites human-entered columns, so the sales team's notes survive
+            regeneration and feed the next pull.
+        </p>
+        <p>
+            The first version was a pile of scripts. Restructuring it so a campaign is a
+            config file plus reference data meant entering a new market required no code at
+            all — and the first preflight against a new market failed honestly on a real
+            data gap instead of running on stale assumptions.
         </p>
 
-        <h2>Limitations</h2>
+        <h2>Limits</h2>
         <ul>
-            <li>Coverage is bounded by public-record completeness and refresh cadence in the target jurisdiction.</li>
-            <li>Address-level firmographic matching degrades in multi-tenant buildings.</li>
-            <li>Enrichment is credit-metered; contact resolution is the cost driver per run.</li>
-            <li>Scale is county to territory, in the thousands of records.</li>
+            <li>Bounded by what the local jurisdiction publishes and how often.</li>
+            <li>Address-level matching degrades in multi-tenant buildings.</li>
+            <li>Contact resolution is credit-metered and is the per-run cost driver.</li>
         </ul>
 
         <p class="post-back post-back-end"><a href="../index.html#writing">← Writing</a></p>

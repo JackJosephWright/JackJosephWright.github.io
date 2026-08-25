@@ -3,10 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Contract obligation reconciliation engine — Jack Wright</title>
-    <meta name="description" content="System writeup: extracts 500+ obligations from long-form agreements, reconciles against a standard template, 92% gap recall at 0% false positives.">
-    <meta property="og:title" content="Contract obligation reconciliation engine">
-    <meta property="og:description" content="System writeup: 500+ obligations extracted and reconciled against a template. 92% gap recall, 0% false positives.">
+    <title>Reading 500 obligations out of a contract — Jack Wright</title>
+    <meta name="description" content="A contract-review engine at 92% gap recall with zero false positives, and the architecture that let legal audit it.">
+    <meta property="og:title" content="Reading 500 obligations out of a contract">
+    <meta property="og:description" content="A contract-review engine at 92% gap recall with zero false positives, built so legal can audit the logic.">
     <meta property="og:type" content="article">
     <meta name="twitter:card" content="summary">
     <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='18' fill='%23b4560e'/%3E%3Ctext x='50' y='68' font-size='52' font-family='Georgia,serif' font-weight='bold' fill='white' text-anchor='middle'%3EJW%3C/text%3E%3C/svg%3E">
@@ -18,115 +18,71 @@
 <body>
     <article class="post">
         <p class="post-back"><a href="../index.html#writing">← Writing</a></p>
-        <h1>Contract obligation reconciliation engine</h1>
+        <h1>Reading 500 obligations out of a contract</h1>
 
         <dl class="spec">
             <dt>Status</dt><dd>Production</dd>
+            <dt>Result</dt><dd>92% gap recall, 0% false positives, on a hand-graded set with negative controls</dd>
             <dt>Role</dt><dd>Sole engineer</dd>
-            <dt>Stack</dt><dd>Python, LLM extraction + matching, pytest</dd>
-            <dt>Scale</dt><dd>500+ obligations per agreement</dd>
         </dl>
 
-        <h2>Problem</h2>
+        <h2>What it does</h2>
         <p>
-            Executed commercial agreements must be checked against a standard obligation
-            template. Review was manual. Reviewer availability bounded throughput, and
-            omissions surfaced late in the contract lifecycle rather than at signature.
+            A long-form commercial agreement goes in. Out comes 500+ discrete obligations in
+            a structured form, checked against the standard template, as a coverage matrix
+            with every gap routed to whoever owns that subject. Review used to be manual,
+            reviewer time capped how many contracts could be checked, and omissions surfaced
+            late.
         </p>
 
-        <h2>Interface</h2>
-        <table>
-            <tr><th>Input</th><td>Executed agreement. Long-form PDF, mixed text-native and scanned pages.</td></tr>
-            <tr><th>Input</th><td>Standard template obligation set.</td></tr>
-            <tr><th>Output</th><td>Coverage matrix. Extracted obligation × template concept, with verdict per pair.</td></tr>
-            <tr><th>Output</th><td>Gap routing. Each uncovered concept assigned to the responsible reader.</td></tr>
-        </table>
-
-        <h2>Pipeline</h2>
-        <ol>
-            <li><strong>Parse.</strong> PDF to text units. Scanned-page detection runs here; see failure modes below.</li>
-            <li><strong>Extract.</strong> Agreement text to typed obligation records. 500+ discrete obligations per agreement.</li>
-            <li><strong>Match.</strong> Semantic assignment of each extracted obligation to a template concept. Model-handled.</li>
-            <li><strong>Reconcile.</strong> Verdict per matched pair. Deterministic.</li>
-            <li><strong>Route.</strong> Each gap assigned to the reader who owns that concept.</li>
-        </ol>
-
-        <h2>Deterministic / model boundary</h2>
+        <h2>The decision that made it usable</h2>
         <p>
-            Stage 3 is the only stage with model authority. Stage 4 is code. The split is
-            the load-bearing design decision: a reviewer disputing a verdict is directed
-            to a named function with a test file, not to a prompt.
+            The instinct is to hand the whole judgment to a model: here's the contract,
+            here's our template, tell me what's missing. It demos well and it fails on the
+            only question that matters in legal review — <em>why did it decide that?</em>
+        </p>
+        <p>
+            So the work is split by whether a rule can be stated without hedging. Which
+            side's number governs when both specify one. Whether a cure period falls inside
+            a notice period. Whether a clause binds the entity under review at all. Those
+            became roughly 150 plain functions with unit tests.
+        </p>
+        <p>
+            The model does one thing: decide whether this paragraph and that template
+            concept express the same requirement, in different words, under a different
+            heading. No code does that, and no amount of code will.
+        </p>
+        <p>
+            The payoff is that a reviewer who disputes an outcome gets pointed at a named
+            function and its tests rather than a paragraph of English that gave a different
+            answer last week. A wrong rule is a code change plus a regression test and it
+            stays fixed. A wrong prompt is a negotiation with a probability distribution.
         </p>
 
-        <table>
-            <tr><th>Decision class</th><th>Handled by</th></tr>
-            <tr><td>Does obligation text X express template concept Y</td><td>Model</td></tr>
-            <tr><td>Numeric flooring — which side's figure governs</td><td>Code</td></tr>
-            <tr><td>Window nesting — does a cure period fall inside a notice period</td><td>Code</td></tr>
-            <tr><td>Asymmetric verdicts — obligation binds one party only</td><td>Code</td></tr>
-            <tr><td>Scope applicability — does the clause bind the reviewed entity</td><td>Code</td></tr>
-        </table>
-
+        <h2>The rubric that couldn't see the problem</h2>
         <p>
-            Rule count in code: approximately 150 tested functions. Model output is
-            schema-validated at the tool-call layer, so a malformed response triggers a
-            retry rather than entering the deterministic half.
+            The most expensive bug produced no false alarm. It produced a clean bill of
+            health.
+        </p>
+        <p>
+            A strictness check scored both sides of a comparison 5 out of 5 and marked the
+            row green, while the actual penalty figure underneath had doubled. The check had
+            no access to the numbers. It could not be wrong, because it could only ever be
+            irrelevant.
+        </p>
+        <p>
+            The cause was two stages upstream: the extraction step had no field for numeric
+            values, so no figure ever reached the assessor. Every hour spent improving the
+            assessor would have changed nothing. When an automated check comes back clean,
+            the question worth asking is whether it could see the thing that would have made
+            it dirty.
         </p>
 
-        <h2>Evaluation</h2>
-        <p>
-            Method: hand-graded case set constructed before the first production run.
-            Negative controls included — items resembling gaps that are not gaps —
-            to measure false-positive appetite rather than recall alone.
-        </p>
-
-        <table>
-            <tr><th>Metric</th><th>Value</th></tr>
-            <tr><td>Gap recall</td><td>92%</td></tr>
-            <tr><td>False positive rate</td><td>0%</td></tr>
-        </table>
-
-        <h2>Failure modes found during build</h2>
-        <p>Four defects in the parse and comparison stages, each silent — no exception raised, output plausible.</p>
-        <table>
-            <tr><th>Defect</th><th>Effect</th><th>Fix</th></tr>
-            <tr>
-                <td>Text extractor returns empty string on scanned page</td>
-                <td>Successful call, empty row. One scanned attachment and one image-only schedule lost from the corpus.</td>
-                <td>Flag pages with low text volume and large embedded image at parse time.</td>
-            </tr>
-            <tr>
-                <td>Unicode ligatures from PDF extraction</td>
-                <td>Identically-rendered strings scored ~6% similar. Manufactured 16 false divergence findings.</td>
-                <td>NFKD normalization before any text comparison.</td>
-            </tr>
-            <tr>
-                <td>"Absent" and "lookup failed" share a return value</td>
-                <td>Extraction misses reported as substantive findings about the document. ~20 percentage points of accuracy.</td>
-                <td>Three-state return: found / confirmed-absent / lookup-failed.</td>
-            </tr>
-            <tr>
-                <td>Positional diffing applied across form families</td>
-                <td>Unrelated documents both number a clause 1.1. Near-0% similarity reported for heavily overlapping content.</td>
-                <td>Concept assignment instead of position. Family guard on positional methods.</td>
-            </tr>
-        </table>
-
-        <h2>Measurement defect</h2>
-        <p>
-            A strictness rubric scored both sides of a comparison 5/5 and rendered the row
-            clean while the penalty figure underneath had doubled. Root cause was upstream:
-            the extraction schema had no numeric-value field, so no magnitude reached the
-            rubric. The rubric could not be wrong because it could not see the deciding
-            variable. Prompt-level fixes to the rubric would have had no effect.
-        </p>
-
-        <h2>Limitations</h2>
+        <h2>Limits</h2>
         <ul>
-            <li>Requires a template. No unsupervised discovery of obligation types.</li>
-            <li>Match quality is bounded by extraction quality upstream.</li>
-            <li>Scale is hundreds of obligations per document, not millions.</li>
-            <li>Coverage matrix is a review artifact, not a verdict. Labeled as such in the output.</li>
+            <li>Needs a template. It finds gaps against a known standard; it doesn't discover what obligations should exist.</li>
+            <li>Matching quality is capped by extraction quality upstream.</li>
+            <li>The coverage matrix is a review artifact, not a verdict, and ships labelled that way.</li>
         </ul>
 
         <p class="post-back post-back-end"><a href="../index.html#writing">← Writing</a></p>
