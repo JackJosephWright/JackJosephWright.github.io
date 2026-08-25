@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Autonomous agent for Magic: The Gathering Arena — Jack Wright</title>
+    <meta name="description" content="System writeup: an LLM-piloted harness for MTG Arena. Why an undecidable game is tractable, the suit/harness/pilot layer model, observe-heavy click-slim architecture, and a calibrated win-probability critic.">
+    <meta property="og:title" content="Autonomous agent for Magic: The Gathering Arena">
+    <meta property="og:description" content="An LLM-piloted harness for MTG Arena: layer model, observe-heavy architecture, and a calibrated win-probability critic.">
+    <meta property="og:type" content="article">
+    <meta name="twitter:card" content="summary">
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='18' fill='%23b4560e'/%3E%3Ctext x='50' y='68' font-size='52' font-family='Georgia,serif' font-weight='bold' fill='white' text-anchor='middle'%3EJW%3C/text%3E%3C/svg%3E">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../styles.css">
+</head>
+<body>
+    <article class="post">
+        <p class="post-back"><a href="../index.html#writing">← Writing</a></p>
+        <h1>Autonomous agent for Magic: The Gathering Arena</h1>
+
+        <dl class="spec">
+            <dt>Status</dt><dd>In development. Mechanics-discovery phase; agent layer deliberately not yet wired.</dd>
+            <dt>Role</dt><dd>Sole engineer</dd>
+            <dt>Stack</dt><dd>Python, OpenCV, SciPy, pyautogui / pydirectinput, LLM pilot, VMware fleet</dd>
+            <dt>Surface</dt><dd>20 registered tools, 1,153 test functions across 94 files, 10 captured replay fixtures</dd>
+            <dt>Repo</dt><dd>Private</dd>
+        </dl>
+
+        <h2>Problem</h2>
+        <p>
+            Magic: The Gathering is not merely complicated. Optimal play is at least as
+            hard as the Halting Problem — an arbitrary Turing machine can be embedded in a
+            game such that the first player wins if and only if the machine halts
+            (<a href="https://arxiv.org/abs/1904.09828" target="_blank" rel="noopener">Churchill,
+            Biderman &amp; Herrick, FUN 2021</a>). The card pool is unbounded and grows
+            quarterly. Any approach that tries to reason over card space directly is
+            attacking a problem that is formally undecidable and expanding.
+        </p>
+
+        <h2>The reduction</h2>
+        <p>
+            The undecidable problem never has to be solved, because the game client
+            already solved the part that matters. Arena's rules engine computes the legal
+            action set at every decision point and emits it. That collapses the problem
+            in three stages, and each stage is a different piece of software.
+        </p>
+        <table>
+            <tr><th>Stage</th><th>Owner</th><th>Transformation</th></tr>
+            <tr><td>1</td><td>Arena's rules engine</td><td>Undecidable → enumerable. It computes the legal menu.</td></tr>
+            <tr><td>2</td><td>The suit (this project)</td><td>Enumerable → executable. Any legal option can be performed and verified.</td></tr>
+            <tr><td>3</td><td>The pilot (an LLM)</td><td>Executable → wise. Choosing well among options already known to be legal.</td></tr>
+        </table>
+        <p>
+            The consequence is the governing design principle: <strong>cards are infinite;
+            interfaces are a catalog.</strong> A given prompt shape — choose N, order the
+            stack, assign damage, pay costs — serves every card that rents that interface,
+            permanently. Coverage is built against interface space, not card space, and
+            interface space is finite and enumerable.
+        </p>
+
+        <h2>Layer model</h2>
+        <p>
+            Three layers, named so that any component's home is unambiguous. The decision
+            socket is the boundary artifact: the single place where a decision is allowed
+            to happen.
+        </p>
+        <table>
+            <tr><th>Layer</th><th>Responsibility</th><th>Enforced by</th></tr>
+            <tr><td>Suit</td><td>Actuation. Clicks, drags, verification.</td><td>No decision logic; tools receive a semantic intent and execute it.</td></tr>
+            <tr><td>Harness</td><td>Observation and connection. State extraction, dispatch, tool registry.</td><td>Priority loop owns a log cursor, a poll cadence, state packaging, and dispatcher hand-off. Nothing else.</td></tr>
+            <tr><td>Pilot</td><td>Policy. Which legal option to take.</td><td>Receives normalized decision requests; never sees vision, clicks, or protocol.</td></tr>
+        </table>
+        <p>
+            Architectural rules are enforced mechanically rather than by convention. The
+            pilot is barred from perceiving the screen by a grep for vision and input
+            imports in its package. Sealed legacy code is enforced by a CI test that walks
+            every source file and asserts the only references to it are facade imports.
+            A design document in this project is required to state the command that would
+            catch its own violation.
+        </p>
+        <p>
+            One rule holds the structure together: <strong>a critic — any evaluator —
+            reads everything and decides nothing.</strong> Influence reaches play only
+            through a pilot choosing to read a critic as context, never through a tool
+            acting on it directly.
+        </p>
+
+        <h2>Observe-heavy, click-slim</h2>
+        <p>
+            The finding that reshaped the architecture: a survey of real client logs
+            showed Arena's <code>Player.log</code> carries near-complete structured game
+            state. Not a text transcript to be regex-scraped — the actual engine state.
+        </p>
+        <table>
+            <tr><th>Category</th><th>Available from the log</th></tr>
+            <tr><td>Per-object state</td><td>Effective power and toughness <em>after</em> layered effects, tap state, summoning sickness, current card types and subtypes after type-changing effects, every ability currently on the object including granted ones, controller and owner as distinct fields, zone, copy status, and which seats have seen a hidden card.</td></tr>
+            <tr><td>Event stream</td><td>Zone transfers, damage events with source and amount, counter add and remove, mana payments, ability instances stacking, life changes with deltas, token creation and deletion, continuous effects coming on and off, and confirmation of the bot's own actions. Twenty-plus annotation types.</td></tr>
+            <tr><td>Lifecycle</td><td>Clean queueing → playing → completed transitions, seat assignment, match end with winner.</td></tr>
+            <tr><td>Modal costs</td><td>For modal spells, the client pre-computes a payment solution per legal mode combination. The tool picks a combination and executes the pre-computed payment rather than solving a mana puzzle.</td></tr>
+        </table>
+        <p>
+            What the log does not contain, at all, is screen position. No coordinates of
+            any kind. That single asymmetry determines the shape of the whole system:
+            <strong>everything about what is true comes from the log; the vision layer
+            exists only to answer where.</strong>
+        </p>
+        <p>
+            The computer-vision layer therefore reduces to five primitives: screen
+            capture, template matching for buttons that have no object id, playable-card
+            detection, a hover sweep that resolves object id to screen position, and click
+            or drag execution. A predecessor codebase was vision-heavy because it tried to
+            recompute game state by looking at the screen. This one is observe-heavy and
+            click-slim, and the reduction came from reading the log format carefully rather
+            than from any cleverness in the vision code.
+        </p>
+
+        <h2>Resolving identity to position</h2>
+        <p>
+            The log identifies every object by instance id. Clicking requires a position.
+            The obvious bridge — read the hand's object list and assume it matches the
+            visual left-to-right order — does not work: the log's list is in creation
+            order, the client's hand fan is in a different internal order, and the two
+            diverge silently.
+        </p>
+        <p>
+            The working method is a hover sweep. Move the cursor across candidate
+            positions, and read the resulting hover events out of the log to learn which
+            object is under the cursor at each point. Identity comes from the log,
+            position comes from the cursor, and the mapping is measured rather than
+            assumed. Playable-card candidates come from detecting the client's
+            selection halo by hue and brightness, then finding peaks in a per-column
+            projection.
+        </p>
+        <table>
+            <tr><th>Method</th><th>Hit rate</th></tr>
+            <tr><td>Halo detection alone, static benchmark corpus</td><td>78% located, 56% exact</td></tr>
+            <tr><td>Halo detection plus hover verification, live</td><td>≥95%</td></tr>
+        </table>
+
+        <h2>Tool contract</h2>
+        <p>
+            Twenty tools are registered today, covering mulligans, land drops, casting,
+            attacking, blocking, damage assignment, target selection, cost payment,
+            X-costs, numeric input, discards, ability activation, and several generic
+            selection prompt shapes. The count matters less than the cost of adding
+            number twenty-one, which the architecture is explicitly built to hold constant.
+        </p>
+        <table>
+            <tr><th>Requirement</th><th>Rule</th></tr>
+            <tr><td>Footprint</td><td>One new file in the tools package. No other source file is edited — no central registry, no dispatcher change, no schema change.</td></tr>
+            <tr><td>Shape</td><td>One class satisfying the tool protocol: a predicate declaring which prompts it claims, an execute method, and self-registration at import.</td></tr>
+            <tr><td>Proof</td><td>Replay-validated against at least one captured real-game sample before merge.</td></tr>
+        </table>
+        <p>
+            The regression signal is stated as a falsifiable claim: if adding an ordinary
+            tool ever requires touching anything beyond its own file and a test file, the
+            architecture has rotted. The tool registry, not any document, is the source of
+            truth for what exists — documentation that enumerates tools was deliberately
+            banned as a drift source.
+        </p>
+
+        <h2>The discovery loop</h2>
+        <p>
+            The system currently runs in shell mode: tools take the first legal option so
+            that games advance, with no pilot attached. This is not a limitation being
+            worked around, it is the point. Shell mode is a sensor.
+        </p>
+        <ol>
+            <li>Play a game with a default policy.</li>
+            <li>Hit a prompt no registered tool claims. Capture the event to an unhandled-samples directory.</li>
+            <li>Write a tool for that prompt shape. Replay-validate it against the captured sample.</li>
+            <li>Resume. Surface the next unhandled prompt.</li>
+        </ol>
+        <p>
+            Deck archetype is part of the sensor. Control decks surface counterspell modals
+            aggro never triggers; ramp decks surface X-cost selectors; human opponents in
+            unranked queues bring homebrews and off-meta lines that the tutorial AI's fixed
+            pool never produces. Rotating archetypes and opponent types is how interface
+            space gets enumerated.
+        </p>
+        <p>
+            Three tiers of sensing fall out of this, and the third is the interesting one:
+            prompts that fail loudly, prompts the system sees and declines, and prompts
+            where the socket silently defaults. <strong>Every abstention is a sensor
+            reading.</strong> The system records its own ignorance, and that record is the
+            work queue.
+        </p>
+
+        <h2>Silent failure</h2>
+        <p>
+            The most instructive defect in the project produced no error. A client update
+            moved the mulligan buttons and restyled them enough that the stored template
+            no longer matched. The click path had two tiers — template match, then
+            calibrated coordinate fallback — and the update invalidated both at once. The
+            template missed, the fallback clicked a position where nothing was, nothing
+            happened, and <strong>the tool reported success.</strong>
+        </p>
+        <p>
+            Geometry was ruled out first by comparing the client's reported window
+            rectangle against calibration; they matched exactly, which is what established
+            that the buttons had genuinely moved rather than the window having drifted.
+            The durable fix was not a new coordinate. It was recognising that template art
+            and calibrated coordinates go stale together after a client update, so both
+            must be re-cut from a single fresh capture in one change — and that a fallback
+            appearing in the logs where a template match used to appear is the
+            early-warning signal that a template has died.
+        </p>
+        <p>
+            This generalises into the failure class the project now treats as the real
+            enemy: <strong>silently harmful success.</strong> The current validation bar is
+            that the prompt cleared. A misrouted click that clears prompts while
+            systematically choosing badly satisfies that bar completely and is invisible to
+            every instrument the harness currently has.
+        </p>
+
+        <h2>Evaluation</h2>
+        <p>
+            Five distinct test shapes, with enforced vocabulary — sessions are required to
+            use the canonical name rather than "live test" or "let's run it," because
+            ambiguity about which shape is being requested costs real time.
+        </p>
+        <table>
+            <tr><th>Shape</th><th>Definition</th></tr>
+            <tr><td>Unit</td><td>No game client. All external effects mocked, including a fake input handler substituted at import so a stray call cannot move a real cursor.</td></tr>
+            <tr><td>Replay</td><td>A captured fixture — screenshot plus log tail — replayed through one pipeline or tool. Deterministic and offline.</td></tr>
+            <tr><td>Smoke</td><td>Boot, calibrate, navigate into a game, play a turn or two.</td></tr>
+            <tr><td>Isolated live</td><td>Boot directly into one specific game state, fire one tool, observe the outcome.</td></tr>
+            <tr><td>Soak</td><td>Unattended overnight games across decks and opponents. Catches what only volume catches.</td></tr>
+        </table>
+        <p>
+            The gate between mechanics work and pilot work is explicit and quantified:
+            twenty completed games against the tutorial AI and twenty against human
+            opponents, three distinct archetypes in each lane, zero crashes, and every
+            prompt type the client emitted handled by some registered tool — with the
+            unhandled-samples directory empty at the end of the run. Pilot work does not
+            begin until that passes. The reasoning is that a pilot debugging its own
+            actuators learns nothing about play.
+        </p>
+
+        <h2>The critic</h2>
+        <p>
+            A separate workstream trained a calibrated win-probability model over
+            historical game data — 12.4M state snapshots, AUC 0.707. Its most useful output
+            was not a number but a correction: the learned weights showed that a
+            hand-tuned heuristic had been underweighting board presence by roughly a
+            factor of three. The bias toward hoarding life total was real and measurable.
+        </p>
+        <p>
+            The model's correct granularity turned out to be the decision <em>class</em>,
+            not the individual decision. A single decision's change in win probability is
+            dominated by what the opponent happens to do next; aggregated across a class of
+            decisions, the same measurement is signal. That granularity happens to match
+            the coverage map's own structure, which lets the map grow a second axis:
+            frequency × consequence rather than frequency alone. The question "does this
+            interaction execute correctly" gains a sibling — "does this interaction
+            matter."
+        </p>
+        <p>
+            The critic is also the only instrument that can detect silently harmful
+            success, because a systematically bad choice that clears every prompt shows up
+            as drag on win probability and nowhere else. It remains firewalled: it reads
+            everything, it decides nothing.
+        </p>
+
+        <h2>Why a language model and not reinforcement learning</h2>
+        <table>
+            <tr><th>Consideration</th><th>Finding</th></tr>
+            <tr>
+                <td>Shape of the difficulty</td>
+                <td>Arcade-game difficulty is reflex-shaped — a fixed action set with deep execution demands — which is reinforcement learning's home turf. Magic's difficulty is language-shaped: the rules are text and interactions are reasoned about in sentences. That is a reader's home turf.</td>
+            </tr>
+            <tr>
+                <td>Sample economics</td>
+                <td>Real games are far too slow to learn from and exactly right for proving execution. Arena is the validator, not the gym. Intelligence has to come from priors or from offline data, not from live play.</td>
+            </tr>
+            <tr>
+                <td>Next-state access</td>
+                <td>Predicting the next state is unnecessary. The engine logs the actual next state seconds after every choice, so the decision journal records choice → observed delta → labeled outcome. Sample the next state; do not model it.</td>
+            </tr>
+            <tr>
+                <td>Transfer</td>
+                <td>Because the decision socket exchanges semantic choices rather than pixels, substituting a simulator for the live client is a change of transport, not of interface.</td>
+            </tr>
+        </table>
+
+        <h2>Limitations</h2>
+        <ul>
+            <li>Mechanics-discovery phase. The pilot is not wired in; tools take first-legal defaults by design until the gate passes.</li>
+            <li>Interface coverage is incomplete by construction — the discovery loop exists precisely because the catalog is not finished.</li>
+            <li>Validation currently proves that prompts clear, not that choices are good. Closing that gap is what the critic is for, and it is not yet closed.</li>
+            <li>Client updates invalidate templates and calibrated coordinates together; each update costs a re-capture cycle.</li>
+            <li>Restricted to unranked and tutorial queues. A stuck bot in a ranked queue would carry real consequences, so no code path selects one.</li>
+        </ul>
+
+        <p class="post-back post-back-end"><a href="../index.html#writing">← Writing</a></p>
+    </article>
+</body>
+</html>
