@@ -86,11 +86,12 @@
                     <ul>
                         <li>Mode 1: unit overview + lesson number → complete, teach-ready lesson plan grounded in the network's curriculum and teaching expectations.</li>
                         <li>Mode 2: multi-turn coaching that walks a teacher through internalizing a plan before class.</li>
-                        <li>Core requirement: quote accuracy at scale. Every passage a plan cites is drawn from the actual book text — chunked and fed to the model — not paraphrased from model memory.</li>
-                        <li>Human adversarial review over generated lessons: teachers challenge plans, corrections feed back into generation — human-reinforced learning at scale.</li>
+                        <li>Core requirement: quote accuracy at scale. Every passage a plan cites is extracted verbatim from the purchased book text, not recalled by the model.</li>
+                        <li>Extraction is a five-strategy parser cascade with guards against the silent failure — a parse that succeeds and is wrong. Chapters carry source offsets, so every quotation is traceable to a position in the book.</li>
+                        <li>K–8, 4 units, 25–30 lessons per unit. Every lesson human-reviewed and passed; adversarial review by teachers is the correction signal that improves generation.</li>
                         <li>Per-mode model selection + prompt caching: ~$0.05 per generated plan; full-school usage projected at tens of dollars per month.</li>
                     </ul>
-                    <ul class="tags"><li>LLM generation</li><li>Quote grounding</li><li>Human feedback loop</li><li>Education</li></ul>
+                    <ul class="tags"><li>LLM generation</li><li>Text extraction</li><li>Quote grounding</li><li>Human feedback loop</li></ul>
                 </article>
                 <article class="card">
                     <h3>Knowledge platform + MCP server</h3>
@@ -199,7 +200,7 @@
                 </li>
                 <li>
                     <a href="writing/lesson-plan-generator.html">Lesson plan generator with quote grounding</a>
-                    <p>Unit overview to teach-ready lesson plan. Verbatim quote grounding against parsed source text, teacher adversarial review as correction signal, and per-mode model assignment for deployment cost.</p>
+                    <p>K–8, 4 units, 25–30 lessons each, every lesson human-reviewed. The five-strategy extraction cascade and its guards, verbatim quote grounding with source offsets, teacher adversarial review as correction signal, and per-mode model cost.</p>
                 </li>
             </ul>
         </section>

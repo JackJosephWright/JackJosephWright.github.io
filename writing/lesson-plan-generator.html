@@ -24,7 +24,9 @@
             <dt>Status</dt><dd>Pilot</dd>
             <dt>Role</dt><dd>Sole engineer</dd>
             <dt>Stack</dt><dd>Python, Flask, SQLite, Claude Sonnet 4.5 / Haiku 4.5</dd>
-            <dt>Coverage</dt><dd>Grade bands K–2, 3–5, 6–8</dd>
+            <dt>Coverage</dt><dd>K–8. Grade bands K–2, 3–5, 6–8</dd>
+            <dt>Volume</dt><dd>4 units. 25–30 lessons per unit. Every lesson human-reviewed and passed.</dd>
+            <dt>Sources</dt><dd>Purchased trade books and public-domain texts</dd>
         </dl>
 
         <h2>Problem</h2>
@@ -59,13 +61,61 @@
 
         <h2>Pipeline</h2>
         <ol>
-            <li><strong>Ingest.</strong> Source text parsed into chapters.</li>
-            <li><strong>Chunk.</strong> Chapter segmentation into lesson-scale units with titles and indices.</li>
-            <li><strong>Distill.</strong> Chapter summaries and a quick pass over the full text.</li>
+            <li><strong>Extract.</strong> Purchased book text to structured chapters. Detailed below.</li>
+            <li><strong>Chunk.</strong> Chapters segmented into exactly <em>n</em> lesson-scale units, each carrying an index, a title, and a chapter reference.</li>
+            <li><strong>Distill.</strong> Per-chapter summaries and a quick pass over the full text.</li>
             <li><strong>Overview.</strong> Unit overview generation — arc, virtue focus, standards alignment, lesson count.</li>
-            <li><strong>Generate.</strong> Lesson plan against the template, grounded in the chunk for that lesson plus curriculum resources.</li>
+            <li><strong>Generate.</strong> Lesson plan against the template, grounded in that lesson's chunk plus curriculum resources.</li>
             <li><strong>Refine.</strong> Teacher-directed revision applied to a generated plan.</li>
         </ol>
+
+        <h2>Extraction</h2>
+        <p>
+            Source books arrive as unstructured text with no reliable format. A purchased
+            trade book, a public-domain transcription, and a scanned reader each mark
+            chapter boundaries differently, and getting boundaries wrong corrupts every
+            downstream quotation. Extraction is a cascade of parsing strategies, tried in
+            order; the first to yield two or more chapters wins, and the strategy that won
+            is recorded against the book.
+        </p>
+        <table>
+            <tr><th>#</th><th>Strategy</th><th>Detects</th></tr>
+            <tr><td>1</td><td>TOC-anchored</td><td>A CONTENTS block. Titles are read from it, then located in the body <em>after</em> the table of contents ends.</td></tr>
+            <tr><td>2</td><td>All-caps headings</td><td>Multi-word and single-word capitalized heading lines.</td></tr>
+            <tr><td>3</td><td>Chapter-N</td><td><code>CHAPTER</code>, <code>STORY</code>, or <code>PART</code> followed by an arabic or roman numeral.</td></tr>
+            <tr><td>4</td><td>Markdown</td><td><code>#</code> and <code>##</code> headings.</td></tr>
+            <tr><td>5</td><td>Single chapter</td><td>Whole text as one chapter. Always succeeds; guarantees the stage cannot hard-fail.</td></tr>
+        </table>
+
+        <h2>Extraction guards</h2>
+        <p>The failure mode that matters is not a crash. It is a parse that succeeds and is wrong.</p>
+        <table>
+            <tr><th>Guard</th><th>Prevents</th></tr>
+            <tr>
+                <td>A heading followed by fewer than 200 characters of prose is discarded</td>
+                <td>Table-of-contents lines and running heads registering as chapters</td>
+            </tr>
+            <tr>
+                <td>Duplicate titles resolve to their last occurrence</td>
+                <td>A chapter anchoring to its TOC entry rather than the chapter itself, which would truncate every chapter to the length of a TOC line</td>
+            </tr>
+            <tr>
+                <td>Chapters carry start and end offsets into the raw text</td>
+                <td>Untraceable quotations. Any cited passage resolves to a position in the source.</td>
+            </tr>
+            <tr>
+                <td>Chapter references resolve by normalized exact match, then substring</td>
+                <td>Brittle failure on punctuation and case differences between a lesson's reference and the book's own heading</td>
+            </tr>
+            <tr>
+                <td>A multi-reference lookup returns what matched; null only if nothing matched</td>
+                <td>One unmatched reference discarding the text of its matched siblings</td>
+            </tr>
+            <tr>
+                <td>Parse output persisted as JSON</td>
+                <td>Re-parsing on every generation. Downstream text extraction is programmatic and cheap.</td>
+            </tr>
+        </table>
 
         <h2>Grounding resources</h2>
         <p>
@@ -85,16 +135,25 @@
 
         <h2>Human adversarial review</h2>
         <p>
-            Generated plans are reviewed by teachers who challenge them directly —
-            scaffolding that progresses too fast, a writing task misplaced in the unit
-            arc, a passage that does not support the stated objective. Corrections are
-            captured against the specific lesson and fed back into generation.
+            No generated lesson is used unreviewed. Every lesson across all four units —
+            25 to 30 per unit — was read by a human reviewer and passed before entering
+            the curriculum. Review is adversarial by design: the reviewer's task is to
+            attack the plan, not approve it.
         </p>
+        <table>
+            <tr><th>Defect class</th><th>Example</th></tr>
+            <tr><td>Scaffolding slope</td><td>Independent practice escalating faster than the unit arc supports; early lessons requiring writing where drawing and oral narration belong</td></tr>
+            <tr><td>Arc placement</td><td>A summative writing task positioned mid-unit rather than as the culminating piece</td></tr>
+            <tr><td>Objective mismatch</td><td>A cited passage that does not support the stated comprehension objective</td></tr>
+            <tr><td>Quotation fidelity</td><td>Any passage not matching the source text verbatim</td></tr>
+        </table>
         <p>
-            This is the mechanism that makes the system improve rather than plateau.
-            Domain experts produce correction signal as a byproduct of using the tool, at
-            a volume no single author could generate. Reviewer time is spent on judgment,
-            not on drafting.
+            Corrections are captured against the specific lesson and retained. The review
+            record is the system's improvement signal: domain experts generate correction
+            data as a byproduct of doing their normal work, at a volume no single prompt
+            author could produce, and each pass raises the floor for the next generation
+            run. Reviewer time is spent on judgment rather than drafting — which is the
+            entire economic argument for the system.
         </p>
 
         <h2>Deployment economics</h2>
@@ -112,10 +171,10 @@
 
         <h2>Limitations</h2>
         <ul>
-            <li>Pilot stage. Not yet deployed network-wide.</li>
-            <li>Quote fidelity depends on source-text parse quality; poorly digitized texts degrade grounding.</li>
-            <li>Correction capture is per-lesson and manual. No automated promotion of corrections into prompt changes.</li>
-            <li>Coverage is limited to units with a machine-readable source text.</li>
+            <li>Pilot stage. Four units built; not yet deployed network-wide.</li>
+            <li>Quote fidelity is bounded by extraction quality. A poorly digitized source degrades grounding before generation ever runs.</li>
+            <li>Every lesson requires human review to ship. Review is the throughput constraint, by design — the system reduces drafting cost, not approval cost.</li>
+            <li>Requires a machine-readable source text.</li>
         </ul>
 
         <p class="post-back post-back-end"><a href="../index.html#writing">← Writing</a></p>
