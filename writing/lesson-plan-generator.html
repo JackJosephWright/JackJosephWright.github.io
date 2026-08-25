@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lesson plan generator with quote grounding — Jack Wright</title>
+    <meta name="description" content="System writeup: unit overview to teach-ready lesson plan, with verbatim quote grounding against parsed source text and teacher adversarial review feeding back into generation.">
+    <meta property="og:title" content="Lesson plan generator with quote grounding">
+    <meta property="og:description" content="Unit overview to teach-ready lesson plan. Verbatim quote grounding and teacher adversarial review at scale.">
+    <meta property="og:type" content="article">
+    <meta name="twitter:card" content="summary">
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='18' fill='%23b4560e'/%3E%3Ctext x='50' y='68' font-size='52' font-family='Georgia,serif' font-weight='bold' fill='white' text-anchor='middle'%3EJW%3C/text%3E%3C/svg%3E">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../styles.css">
+</head>
+<body>
+    <article class="post">
+        <p class="post-back"><a href="../index.html#writing">← Writing</a></p>
+        <h1>Lesson plan generator with quote grounding</h1>
+
+        <dl class="spec">
+            <dt>Status</dt><dd>Pilot</dd>
+            <dt>Role</dt><dd>Sole engineer</dd>
+            <dt>Stack</dt><dd>Python, Flask, SQLite, Claude Sonnet 4.5 / Haiku 4.5</dd>
+            <dt>Coverage</dt><dd>Grade bands K–2, 3–5, 6–8</dd>
+        </dl>
+
+        <h2>Problem</h2>
+        <p>
+            Lesson planning for a knowledge-building ELA curriculum is time-intensive and
+            uneven in quality across a network. Teachers need plans that cite the source
+            text accurately, align to stated instructional expectations, and are ready to
+            teach without further preparation.
+        </p>
+
+        <h2>Interface</h2>
+        <table>
+            <tr><th>Mode 1 input</th><td>Unit overview, lesson number, grade band.</td></tr>
+            <tr><th>Mode 1 output</th><td>Complete teach-ready lesson plan against a fixed template.</td></tr>
+            <tr><th>Mode 2 input</th><td>An existing lesson plan the teacher is preparing to deliver.</td></tr>
+            <tr><th>Mode 2 output</th><td>Multi-turn internalization coaching conversation.</td></tr>
+        </table>
+
+        <h2>Core constraint: quote accuracy at scale</h2>
+        <p>
+            The binding requirement is not plan quality in the abstract. It is that every
+            passage a plan cites is a verbatim quotation from the actual text. A plan that
+            quotes a book approximately is unusable — the teacher reads it aloud in front
+            of a class, against the real page.
+        </p>
+        <p>
+            Model memory of a text is not an acceptable source. Source books are parsed
+            into chapters, chunked, and supplied to generation as context. Quotations are
+            drawn from supplied text, not recalled. This is the difference between a
+            system a teacher can carry into a classroom and a demo.
+        </p>
+
+        <h2>Pipeline</h2>
+        <ol>
+            <li><strong>Ingest.</strong> Source text parsed into chapters.</li>
+            <li><strong>Chunk.</strong> Chapter segmentation into lesson-scale units with titles and indices.</li>
+            <li><strong>Distill.</strong> Chapter summaries and a quick pass over the full text.</li>
+            <li><strong>Overview.</strong> Unit overview generation — arc, virtue focus, standards alignment, lesson count.</li>
+            <li><strong>Generate.</strong> Lesson plan against the template, grounded in the chunk for that lesson plus curriculum resources.</li>
+            <li><strong>Refine.</strong> Teacher-directed revision applied to a generated plan.</li>
+        </ol>
+
+        <h2>Grounding resources</h2>
+        <p>
+            Generation is conditioned on the network's own instructional documents rather
+            than general pedagogical knowledge. Resources are stored records injected into
+            the prompt, not fine-tuned weights, so a change to an instructional norm takes
+            effect on the next run.
+        </p>
+        <table>
+            <tr><th>Resource</th><th>Function</th></tr>
+            <tr><td>Teaching expectations</td><td>Instructional norms the plan must conform to</td></tr>
+            <tr><td>Narration protocol</td><td>Core comprehension method</td></tr>
+            <tr><td>Socratic seminar protocol</td><td>Discussion structure</td></tr>
+            <tr><td>Virtue formation framework</td><td>Character objectives per lesson</td></tr>
+            <tr><td>Assessment and exit tickets</td><td>Formative assessment design</td></tr>
+        </table>
+
+        <h2>Human adversarial review</h2>
+        <p>
+            Generated plans are reviewed by teachers who challenge them directly —
+            scaffolding that progresses too fast, a writing task misplaced in the unit
+            arc, a passage that does not support the stated objective. Corrections are
+            captured against the specific lesson and fed back into generation.
+        </p>
+        <p>
+            This is the mechanism that makes the system improve rather than plateau.
+            Domain experts produce correction signal as a byproduct of using the tool, at
+            a volume no single author could generate. Reviewer time is spent on judgment,
+            not on drafting.
+        </p>
+
+        <h2>Deployment economics</h2>
+        <table>
+            <tr><th>Operation</th><th>Model</th><th>Approximate cost</th></tr>
+            <tr><td>Lesson plan generation</td><td>Sonnet 4.5</td><td>$0.05 per plan</td></tr>
+            <tr><td>Internalization exchange</td><td>Haiku 4.5</td><td>$0.02 per exchange</td></tr>
+            <tr><td>Full-school usage</td><td>—</td><td>$50–70 per month with prompt caching</td></tr>
+        </table>
+        <p>
+            Mode 2 does not need the stronger model. Assigning models per mode rather than
+            per system is what puts network-wide deployment inside a budget that does not
+            require a procurement conversation.
+        </p>
+
+        <h2>Limitations</h2>
+        <ul>
+            <li>Pilot stage. Not yet deployed network-wide.</li>
+            <li>Quote fidelity depends on source-text parse quality; poorly digitized texts degrade grounding.</li>
+            <li>Correction capture is per-lesson and manual. No automated promotion of corrections into prompt changes.</li>
+            <li>Coverage is limited to units with a machine-readable source text.</li>
+        </ul>
+
+        <p class="post-back post-back-end"><a href="../index.html#writing">← Writing</a></p>
+    </article>
+</body>
+</html>

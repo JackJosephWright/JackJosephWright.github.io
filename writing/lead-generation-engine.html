@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lead generation engine from public records — Jack Wright</title>
+    <meta name="description" content="System writeup: public parcel and assessment records to a ranked, contact-ready target list. Config-driven pipeline, adversarial verification, 71 tests.">
+    <meta property="og:title" content="Lead generation engine from public records">
+    <meta property="og:description" content="Public parcel records to a ranked, verified target list. Config-driven pipeline with adversarial verification.">
+    <meta property="og:type" content="article">
+    <meta name="twitter:card" content="summary">
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='18' fill='%23b4560e'/%3E%3Ctext x='50' y='68' font-size='52' font-family='Georgia,serif' font-weight='bold' fill='white' text-anchor='middle'%3EJW%3C/text%3E%3C/svg%3E">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../styles.css">
+</head>
+<body>
+    <article class="post">
+        <p class="post-back"><a href="../index.html#writing">← Writing</a></p>
+        <h1>Lead generation engine from public records</h1>
+
+        <dl class="spec">
+            <dt>Status</dt><dd>Production, delivered</dd>
+            <dt>Role</dt><dd>Sole engineer</dd>
+            <dt>Stack</dt><dd>Python, public records ingest, commercial enrichment APIs, LLM verification</dd>
+            <dt>Tests</dt><dd>71</dd>
+        </dl>
+
+        <h2>Problem</h2>
+        <p>
+            Target identification was manual and did not scale to a new territory. The
+            requirement was a ranked list of qualified organizations with named contacts,
+            each row carrying a rationale a salesperson could read before making a call.
+        </p>
+
+        <h2>Interface</h2>
+        <table>
+            <tr><th>Input</th><td>Public parcel and assessment records for the territory.</td></tr>
+            <tr><th>Input</th><td>Campaign profile — qualification thresholds, geography, reference data.</td></tr>
+            <tr><th>Output</th><td>Ranked target list. Organization, qualification evidence, buying-committee contacts, per-row rationale.</td></tr>
+            <tr><th>Output</th><td>Living tracker. Upserts on re-run; human-entered columns preserved.</td></tr>
+        </table>
+
+        <h2>Pipeline</h2>
+        <ol>
+            <li><strong>Building spine.</strong> Filter parcel and assessment records to candidate structures.</li>
+            <li><strong>Firmographic match.</strong> Address-level join from parcel to occupying organization.</li>
+            <li><strong>Qualification.</strong> Multi-gate filter. Gates compile from the campaign profile.</li>
+            <li><strong>Enrichment.</strong> Buying-committee contact resolution against commercial APIs.</li>
+            <li><strong>Verification.</strong> Adversarial pass over every candidate. Refute-by-default.</li>
+            <li><strong>Rank and emit.</strong> Scored list written to the tracker.</li>
+        </ol>
+
+        <h2>Verification design</h2>
+        <p>
+            Candidates are checked by independent verifiers instructed to refute rather
+            than confirm, returning refuted when evidence is insufficient. Verifiers are
+            perspective-diverse rather than redundant — repeating one skeptic three times
+            reproduces one blind spot three times.
+        </p>
+        <table>
+            <tr><th>Measure</th><th>Value</th></tr>
+            <tr><td>Candidates removed as wrong or unverifiable</td><td>~40%</td></tr>
+            <tr><td>Verified targets delivered</td><td>~160</td></tr>
+            <tr><td>Requested volume</td><td>150–200</td></tr>
+        </table>
+
+        <h2>Funnel leakage audit</h2>
+        <p>
+            An audit of stage-to-stage counts identified a classification gate tuned too
+            tightly, discarding qualified records before enrichment. Widening the gate
+            recovered approximately 75 additional qualified leads — close to doubling the
+            list. Every recovered record was passed through the same adversarial
+            verification before delivery.
+        </p>
+        <p>
+            Detection method: conservation counts between adjacent stages. A stage that
+            silently drops records is invisible without them.
+        </p>
+
+        <h2>Configuration refactor</h2>
+        <p>
+            Initial implementation was a script pile. It was restructured into a
+            config-driven engine: typed records, gates compiled from configuration, source
+            adapters behind one interface, a stage runner, and provenance manifests per
+            run.
+        </p>
+        <table>
+            <tr><th>Before</th><th>After</th></tr>
+            <tr><td>New market requires code changes</td><td>New market is a profile file plus reference data</td></tr>
+            <tr><td>No test coverage</td><td>71 tests</td></tr>
+            <tr><td>Reruns recompute everything</td><td>Expensive stages persist structured output; reruns load and recompute deltas</td></tr>
+        </table>
+        <p>
+            Validation of the refactor: production output reproduced at zero API cost from
+            persisted artifacts. The first preflight against a new market configuration
+            failed on a genuine data gap rather than running on stale assumptions.
+        </p>
+
+        <h2>Delivery constraint</h2>
+        <p>
+            The output is a working surface, not a report. The tracker upserts on re-run
+            and never overwrites human-entered columns, so sales annotations survive
+            regeneration and feed the next pull's qualification.
+        </p>
+
+        <h2>Limitations</h2>
+        <ul>
+            <li>Coverage is bounded by public-record completeness and refresh cadence in the target jurisdiction.</li>
+            <li>Address-level firmographic matching degrades in multi-tenant buildings.</li>
+            <li>Enrichment is credit-metered; contact resolution is the cost driver per run.</li>
+            <li>Scale is county to territory, in the thousands of records.</li>
+        </ul>
+
+        <p class="post-back post-back-end"><a href="../index.html#writing">← Writing</a></p>
+    </article>
+</body>
+</html>

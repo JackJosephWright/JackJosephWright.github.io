@@ -325,15 +325,62 @@ a:hover { text-decoration: underline; }
 }
 
 .post p { color: var(--ink-soft); margin-top: 1rem; }
-.post .lede { font-size: 1.12rem; color: var(--ink); margin-top: 1.75rem; }
 .post strong { color: var(--ink); font-weight: 600; }
 
-.post ul {
+.post ul, .post ol {
     color: var(--ink-soft);
     margin: 1rem 0 0 1.25rem;
     display: flex;
     flex-direction: column;
     gap: 0.55rem;
+}
+
+/* spec header block */
+.spec {
+    display: grid;
+    grid-template-columns: max-content 1fr;
+    gap: 0.4rem 1.25rem;
+    margin-top: 1.5rem;
+    padding: 1rem 1.15rem;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    background: var(--bg-raised);
+    font-size: 0.92rem;
+}
+
+.spec dt {
+    font-family: var(--mono);
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--ink-faint);
+    align-self: center;
+}
+
+.spec dd { color: var(--ink-soft); margin: 0; }
+
+/* data tables */
+.post table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 1.25rem;
+    font-size: 0.92rem;
+    display: block;
+    overflow-x: auto;
+}
+
+.post th, .post td {
+    text-align: left;
+    vertical-align: top;
+    padding: 0.6rem 0.85rem 0.6rem 0;
+    border-bottom: 1px solid var(--line);
+    color: var(--ink-soft);
+}
+
+.post th {
+    color: var(--ink);
+    font-weight: 600;
+    white-space: nowrap;
 }
 
 .post code {
