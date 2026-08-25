@@ -120,7 +120,11 @@
                         <li>Engineering practice: log-first diagnosis over vision, per-mechanic eval gates, adversarial multi-agent code review.</li>
                     </ul>
                     <ul class="tags"><li>LLM agents</li><li>Computer vision</li><li>Python</li><li>Private repo</li></ul>
-                    <p class="card-links"><a href="writing/mtga-agent.html">Read the architecture writeup →</a></p>
+                    <p class="card-links">
+                        <a href="writing/mtga-agent.html">Architecture →</a>
+                        <a href="writing/wedge-detection.html">Reliability →</a>
+                        <a href="writing/win-prob.html">Win-probability research →</a>
+                    </p>
                 </article>
                 <article class="card">
                     <h3>MTG analytics research</h3>
@@ -195,7 +199,15 @@
             <ul class="writing-list">
                 <li>
                     <a href="writing/mtga-agent.html">Autonomous agent for Magic: The Gathering Arena</a>
-                    <p>Optimal play in Magic is at least as hard as the Halting Problem. Why that never has to be solved, the suit/harness/pilot layer model, an observe-heavy architecture that reduced computer vision to five primitives, and a calibrated win-probability critic that reads everything and decides nothing.</p>
+                    <p>Optimal play in Magic is at least as hard as the Halting Problem. Why that never has to be solved, an observe-heavy architecture that reduced computer vision to five primitives, treating every reported success as a falsifiable hypothesis, and why stability is not readiness.</p>
+                </li>
+                <li>
+                    <a href="writing/wedge-detection.html">A wedge is not always quiet</a>
+                    <p>Reliability engineering for an unattended fleet. A detector that read a downed machine as the healthiest on the fleet, a livelock that logged 2,089 consecutive successes, and why every freeze turned out to be a sensing failure before it was a behavior failure.</p>
+                </li>
+                <li>
+                    <a href="writing/win-prob.html">Measuring what a Magic position is worth</a>
+                    <p>An empirical study over 5.1M games. Re-aggregating the same features beat adding new ones by 71%, card face attributes explain 3% of card quality, static state cannot price an attack at all, and a value function conditioned on the wrong event teaches a bot to hoard.</p>
                 </li>
                 <li>
                     <a href="writing/contract-reconciliation-engine.html">Contract obligation reconciliation engine</a>

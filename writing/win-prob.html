@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Measuring what a Magic position is worth — Jack Wright</title>
+    <meta name="description" content="An empirical study over 5.1M games: how to represent a board state, why re-aggregation beat new data, why static features cannot price an attack, and the value function that teaches a bot to hoard.">
+    <meta property="og:title" content="Measuring what a Magic position is worth">
+    <meta property="og:description" content="An empirical study over 5.1M games of Magic: board representation, aggregation, and the limits of static state value.">
+    <meta property="og:type" content="article">
+    <meta name="twitter:card" content="summary">
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='18' fill='%23b4560e'/%3E%3Ctext x='50' y='68' font-size='52' font-family='Georgia,serif' font-weight='bold' fill='white' text-anchor='middle'%3EJW%3C/text%3E%3C/svg%3E">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../styles.css">
+</head>
+<body>
+    <article class="post">
+        <p class="post-back"><a href="../index.html#writing">← Writing</a></p>
+        <h1>Measuring what a Magic position is worth</h1>
+
+        <dl class="spec">
+            <dt>Status</dt><dd>Offline measurement program. Deliberately not wired into the agent.</dd>
+            <dt>Role</dt><dd>Sole researcher and engineer</dd>
+            <dt>Method</dt><dd>Logistic regression fit by IRLS with L2 ridge; 5-fold grouped cross-validation, encodings cross-fitted inside each fold</dd>
+            <dt>Data</dt><dd>7 sets · 5,109,204 games · 31,407,915 card episodes (public 17lands replay exports)</dd>
+            <dt>Tests</dt><dd>137 unit tests across five modules</dd>
+        </dl>
+
+        <h2>Question</h2>
+        <p>
+            An agent that plays Magic needs to know whether a move improved its position.
+            That requires a value function over board states: given a frozen snapshot, what
+            is the probability this player wins? The agent already ships a small
+            eight-feature model over board geometry — life totals, creature counts, cards
+            in hand, lands. The question this program set out to answer was whether knowing
+            <em>which cards</em> are on the board beats knowing only the shape of it, and
+            what the right representation of a board actually is.
+        </p>
+        <p>
+            The answers were mostly not the expected ones, and the most useful result was a
+            hard ceiling rather than a gain.
+        </p>
+
+        <h2>Data handling</h2>
+        <table>
+            <tr><th>Concern</th><th>Approach</th></tr>
+            <tr>
+                <td>Volume</td>
+                <td>~3 GB gzipped, roughly ten times that decompressed, against a fixed disk allowance. Streamed over HTTPS and decompressed in memory; nothing decompressed ever touches disk. Only integer counts are checkpointed, so a dropped connection costs one set rather than a run.</td>
+            </tr>
+            <tr>
+                <td>Sampling</td>
+                <td>Samples hash the draft identifier rather than taking the first N rows. The exports are chronological, so a head slice would train entirely on a set's opening days — when the format is unsolved and players are measurably worse.</td>
+            </tr>
+            <tr>
+                <td>Validation</td>
+                <td>Five-fold, grouped by draft so no draft spans folds. Every card-level encoding is rebuilt inside each fold from training games only.</td>
+            </tr>
+            <tr>
+                <td>Shape</td>
+                <td>The widest set's schema is 2,509 columns, carrying a fixed 30 turn indices per game regardless of actual length.</td>
+            </tr>
+        </table>
+
+        <h2>Leakage, and why sample size hides it</h2>
+        <p>
+            The obvious implementation builds the card-value encoding once over all data and
+            then cross-validates the model. That leaks: the encoding has seen the validation
+            games. Measured against the honest cross-fitted version, leakage inflated the
+            headline result by about 25%.
+        </p>
+        <p>
+            The trap is that leakage severity scales inversely with sample size, which
+            makes it nearly invisible during development. On the full dataset the leaky and
+            honest numbers differ by a few thousandths. On a 399-game smoke fixture — the
+            kind of thing used for a quick check — the same comparison read <strong>+0.334
+            leaky against −0.127 cross-fitted</strong>. The leaky version looked excellent;
+            the honest version showed the features were actively harmful at that sample
+            size. A pipeline validated only on small fixtures would ship the inversion.
+        </p>
+
+        <h2>Finding 1: a zone is a distribution, not an average</h2>
+        <p>
+            The single largest effect in the study came from changing no data at all. Card
+            values aggregated as mean and max across two zones scored a Brier skill lift of
+            +0.0133 over pure geometry. The same values, re-aggregated as sum, mean, max,
+            min, spread, and known-count across three zones — adding the opponent's board —
+            scored <strong>+0.0228. A 71% increase from parameterisation alone.</strong>
+        </p>
+        <p>
+            The reason is that a mean destroys the shape of a zone. One bomb among ten
+            worthless tokens averages to mediocre. Sum carries total mass, max carries the
+            spike, spread carries lopsidedness, and a known-count distinguishes "measurably
+            weak" from "never observed" — which are entirely different states that a mean
+            silently merges.
+        </p>
+        <p>
+            The corollary, tested separately: card values are additive to counts, never a
+            replacement. Value distributions with the counts removed scored <em>below</em>
+            plain geometry.
+        </p>
+
+        <h2>Finding 2: card face attributes cannot rank cards</h2>
+        <p>
+            If card quality could be read off rarity, mana value, and type, the whole
+            problem would generalise to any card ever printed with no measurement needed.
+            A leave-one-card-out study over 1,883 cards closed that escape hatch.
+        </p>
+        <table>
+            <tr><th>Measure</th><th>Value</th></tr>
+            <tr><td>Between-card win-rate variance that is real signal, not noise</td><td>98.8%</td></tr>
+            <tr><td>Of that real variance, explained by rarity × mana value × type</td><td>3.0%</td></tr>
+            <tr><td>Pairwise ranking accuracy from face attributes (chance = 50%)</td><td>56.4%</td></tr>
+        </table>
+        <p>
+            Predicting every card at its turn-level average outright beats the
+            bucket-based prediction. The buckets add noise, not signal. Within the same
+            set, rarity, mana value and colour, cards spread a median of 6.5 percentage
+            points and as much as 22.2 — two rares at the same cost and colour, identical
+            on every face attribute, twenty-two points apart in win rate. Rarity itself is
+            nearly flat and not even monotonic, because the deck a card appears in washes
+            it out.
+        </p>
+
+        <h2>The correction: state the denominator</h2>
+        <p>
+            An earlier revision of this work reported that rarity, mana value and type
+            recovered 93% of the signal — the opposite conclusion. Both numbers were
+            arithmetically correct. The first was 93% <em>of total outcome skill</em>, in a
+            model where card quality contributes only about 11% of the total; the second is
+            3% <em>of card power</em>. The first denominator makes any card feature look
+            excellent, because most of the prediction comes from life totals and board
+            counts regardless.
+        </p>
+        <p>
+            This is filed as a standing method trap rather than a one-off mistake:
+            <strong>a percentage without its denominator is not a result.</strong> The
+            published headline was corrected rather than quietly amended.
+        </p>
+
+        <h2>Finding 3: you cannot buy combat awareness with static state</h2>
+        <p>
+            The strongest result is a negative one. A value function was graded not on
+            calibration but on whether the change in value across a transition recovers the
+            realised value of a known-good action. Two actions, opposite outcomes:
+        </p>
+        <table>
+            <tr><th>Action</th><th>Realised gap</th><th>Shipped model</th><th>+16 static features</th></tr>
+            <tr><td>Removal spell</td><td>+6.3 pp</td><td>29%</td><td>120–126%</td></tr>
+            <tr><td>Attack</td><td>+21 to +24 pp</td><td>~31%</td><td>~31%</td></tr>
+        </table>
+        <p>
+            Adding sixteen carefully chosen static features moved attack recovery
+            <em>not at all</em>. Removal, by contrast, went from barely credited to fully
+            credited — slightly over-credited, in fact.
+        </p>
+        <p>
+            The asymmetry has a clean explanation. Removal's entire value is written into
+            the successor board: a creature is gone, and a static snapshot sees exactly
+            that. An attack's value mostly is not — it lives in damage that will matter
+            later, in the blocks the opponent now has to consider, in a race that has not
+            resolved. A static position function is structurally blind to it, and no amount
+            of additional static features fixes a representational gap. Either the
+            transition itself gets priced, or the reasoning layer has to be told the rule.
+        </p>
+
+        <h2>Finding 4: the initiative asymmetry</h2>
+        <p>
+            One fitted coefficient turned out to be a finding on its own. A flag
+            distinguishing "this snapshot is the end of my turn" from "the end of theirs"
+            carries a large negative weight: <strong>all else exactly equal, the end of
+            your own turn is a worse position than the end of your opponent's.</strong>
+        </p>
+        <p>
+            Which is obvious once stated — you are tapped out and it is about to be their
+            move — and was invisible to every previous model because none of them recorded
+            whose turn the snapshot came from. A related coefficient confirms the same
+            channel: unspent mana on your own turn carries a negative weight.
+        </p>
+
+        <h2>Finding 5: the value function that teaches a bot to hoard</h2>
+        <p>
+            Card win-rate tables can be built conditioned on different events, and the
+            choice of event is a choice of incentive.
+        </p>
+        <p>
+            Conditioned on <em>holding</em> a card, values rise with turn number — a card
+            in hand on turn 10 correlates with winning more than the same card on turn 1.
+            That is true as correlation and false as advice: still holding cards late means
+            the game went long, which means you were probably ahead. <strong>A critic fed
+            those values learns to hoard.</strong> Conditioning instead on <em>casting</em>
+            the card removes the confound, because it conditions on having done something.
+        </p>
+        <p>
+            The same audit found the shipped model reads 0.184 for a perfectly even board on
+            turn one, climbing toward even only around turn eighteen. That was originally
+            logged as a calibration bug. It was reclassified as something worse: <strong>a
+            miscalibrated display is misleading, but a miscalibrated value function that
+            something optimises against is harmful.</strong>
+        </p>
+        <p>
+            The mechanism was then measured rather than assumed, and the first diagnosis was
+            wrong. Attacking does not shrink the attacker's board — attackers end with
+            <em>more</em> creatures than holders, on average. The defect is combat blindness
+            specifically: a board-size critic prices an attack worth +13.5 points of
+            realised win rate at +1.3. The shipped model's life-differential term recovers
+            about 55% of it, so it under-rewards attacking by roughly half rather than
+            teaching pure passivity.
+        </p>
+
+        <h2>Honest negatives</h2>
+        <ul>
+            <li>Two-turn trajectory features — the change in each quantity over the previous two turns — added +0.0003. Nothing. Level features already imply them.</li>
+            <li>A sorted-value vector replacing hand-picked aggregates scored a statistical tie on accuracy, so the aggregates leave no linearly recoverable information behind. It won on a different axis: its behaviour stayed linear across board strengths where the aggregates bent, misattributing where a card's value came from.</li>
+            <li>Graded against the snapshot population an agent actually stands in, the shipped model scores <em>below the base rate</em>. Refitting the same eight features fixes most of it, which means the deficiency is the fitted weights, not the feature set.</li>
+            <li>Marginal-value estimates computed by arithmetic on the fitted model rank plays correctly (per-card correlation ≈ 0.64) but over-promise levels by roughly a factor of two. Ranking is usable; the raw numbers are not calibrated gains and are not quoted as such.</li>
+        </ul>
+
+        <h2>Engineering: the out-of-memory bug</h2>
+        <p>
+            Two runs died silently in a fixed-memory container. The cause was a single
+            expression in the Newton–Raphson fitter that scales the design matrix
+            row-wise before forming the Hessian. That expression materialises a complete
+            copy of the design matrix <em>on every iteration</em> — over a gigabyte per
+            iteration, up to twenty-five iterations, on top of the matrix itself and the
+            training slice.
+        </p>
+        <p>
+            Both the gradient and the Hessian are plain sums over rows, so both can be
+            accumulated in chunks. Rewriting the fitter to accumulate over 250,000-row
+            blocks dropped the largest temporary from roughly 1.26 GB to about 57 MB, a
+            22-fold reduction, with no change to the model. The fitter also gained a row
+            mask so a training split is fit without materialising a copy of it at all.
+        </p>
+        <p>
+            Two details make this a fix rather than a patch. The chunked implementation was
+            verified <em>equivalent</em>, not merely similar — coefficients agree with the
+            single-shot form to within 1e-16. And per-fold peak memory is now printed on
+            every fold line, for a specific reason: under a detached run an out-of-memory
+            kill is indistinguishable from a clean exit, because the launching shell returns
+            zero either way. The run has to carry the number that would explain its own
+            death.
+        </p>
+
+        <h2>Known limitations</h2>
+        <ul>
+            <li><strong>Train/serve skew, unresolved.</strong> The dataset identifies cards but carries no counters, auras, equipment, or disabling effects, so every stat feature is the <em>printed</em> value. A live agent observes <em>modified</em> values. Feeding live values into weights fit on printed ones is a distribution shift; feeding printed values is knowingly wrong on any modified board. This must be decided before any stat-bearing model is deployed.</li>
+            <li><strong>Coverage.</strong> Card-value tables are built from a Limited format; median coverage of the agent's own Standard decks is under 20%, with several decks at zero.</li>
+            <li><strong>Transfer is unmeasured, and the check reads as a false pass.</strong> Every recorded agent game so far is a loss, so a Brier score against a constant outcome collapses to a number that looks respectable while measuring nothing.</li>
+            <li><strong>Not reproducible from this repository.</strong> The training script for the shipped weights lives in a predecessor codebase, so those weights cannot currently be regenerated. Every fix to the shipped model is blocked behind that.</li>
+        </ul>
+
+        <h2>Why none of it is wired in</h2>
+        <p>
+            The findings are deliberately not connected to the agent, and the reason is a
+            design position rather than an unfinished task. Handing a language-model pilot a
+            win-probability number and a table of card values risks reducing it to an
+            executor of the statistical model — at which point the model may as well run
+            alone. Any such feed is therefore introduced as a toggleable instrument,
+            defaulted off, evaluated as its own experimental arm against a naive baseline,
+            never quietly folded in.
+        </p>
+        <p>
+            The division of labour that came out of this program: the reasoning layer owns
+            <em>dynamics</em> — rules, sequencing, tactics, the things it reads natively —
+            and the measurement owns <em>statics</em>, what a frozen position is worth. A
+            value is consumed as a difference at a decision point, never as a level. That
+            requirement is why the models are graded on transition recovery rather than on
+            calibration alone, and it is what surfaced the finding that static state cannot
+            price an attack.
+        </p>
+
+        <p class="post-back post-back-end"><a href="../index.html#writing">← Writing</a></p>
+    </article>
+</body>
+</html>

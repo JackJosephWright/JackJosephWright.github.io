@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>A wedge is not always quiet — Jack Wright</title>
+    <meta name="description" content="Reliability engineering for an unattended bot fleet: why every freeze was a sensing failure before it was a behavior failure, and the detector taxonomy that grew out of it.">
+    <meta property="og:title" content="A wedge is not always quiet">
+    <meta property="og:description" content="Reliability engineering for an unattended fleet: every freeze was a sensing failure before it was a behavior failure.">
+    <meta property="og:type" content="article">
+    <meta name="twitter:card" content="summary">
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='18' fill='%23b4560e'/%3E%3Ctext x='50' y='68' font-size='52' font-family='Georgia,serif' font-weight='bold' fill='white' text-anchor='middle'%3EJW%3C/text%3E%3C/svg%3E">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../styles.css">
+</head>
+<body>
+    <article class="post">
+        <p class="post-back"><a href="../index.html#writing">← Writing</a></p>
+        <h1>A wedge is not always quiet</h1>
+
+        <dl class="spec">
+            <dt>Context</dt><dd>An unattended fleet of VMs running a bot against a commercial game client, overnight, with no supervisor</dd>
+            <dt>Role</dt><dd>Sole engineer</dd>
+            <dt>Artifact</dt><dd>A node classifier with five states and ~14 sub-classes, 31 unit tests, gating by exit code</dd>
+            <dt>Thesis</dt><dd>Every freeze was a sensing failure before it was a behavior failure</dd>
+        </dl>
+
+        <h2>Setting</h2>
+        <p>
+            Three virtual machines, each running a game client and a bot process, playing
+            unattended through the night. Nobody is watching. The failure that matters is
+            not a crash — a crash is loud, leaves a stack trace, and can be restarted. The
+            failure that matters is a machine that looks completely healthy and is
+            accomplishing nothing.
+        </p>
+        <p>
+            What follows is the taxonomy that grew out of chasing those, and the single
+            pattern underneath all of them.
+        </p>
+
+        <h2>The first definition of progress was wrong</h2>
+        <p>
+            The bot had an idle timeout: if nothing happened for long enough, bail out and
+            recover the game. It did not fire. A node sat wedged for roughly seventeen
+            minutes and was eventually rescued by an unrelated external timeout.
+        </p>
+        <p>
+            "Nothing happened" had been implemented as <em>the log stopped growing</em>.
+            But the game client emits a continuous dribble of heartbeat and status traffic
+            regardless of whether the game is advancing. The log grows forever. The idle
+            timer therefore reset forever, and the backstop that existed specifically to
+            catch this class of failure could never fire.
+        </p>
+        <p>
+            The fix was to redefine progress as something semantic: a prompt actually
+            handled, or the turn and phase counters actually advancing. With a careful
+            detail — when the turn signature cannot be read, that must mean "unknown" and
+            not "changed," because treating an unreadable state as progress recreates the
+            original bug in a quieter form.
+        </p>
+        <p>
+            This was the highest-leverage fix in the entire project, and it repaired no
+            behavior at all. It repaired a detector.
+        </p>
+
+        <h2>Instruments feeding each other bad signals</h2>
+        <p>
+            Some tools succeed by deliberately doing nothing — declining to activate an
+            ability, skipping a stale phase. Those produce no outgoing traffic, which is
+            correct. But they were routed through the same success-confirmation mechanism
+            as real actions, which waits for new engine traffic to prove the action landed.
+        </p>
+        <p>
+            No traffic ever came, because none should have. The confirmation timed out. The
+            legitimate no-op was recorded as a suspected missed click, retried five times,
+            and force-advanced. Worse: each retry counted as "a prompt handled," which fed
+            the idle timer, which reset. One node logged <strong>94 consecutive declines on
+            the same prompt and never recovered</strong> — a stuck state tight-looping
+            forever precisely because the retry machinery kept telling the idle detector
+            that things were fine.
+        </p>
+        <p>
+            Two instruments, each locally reasonable, combining into a system that could
+            not notice it was stuck. The fix was to finalize genuine no-ops immediately so
+            they never enter the confirmation path at all.
+        </p>
+
+        <h2>The livelock: successes all the way down</h2>
+        <p>
+            The most severe instance broke the assumption shared by every detector built up
+            to that point.
+        </p>
+        <p>
+            A confirmation click landed on Cancel instead of the confirm button. The
+            action was rescinded. The engine re-issued the identical prompt. The bot
+            answered it the same way, hit Cancel again, and the cycle repeated
+            <strong>2,089 times at roughly eight seconds each, for days</strong>. Every
+            single iteration logged success.
+        </p>
+        <p>
+            And every wedge detector stayed silent — correctly, by its own logic. The
+            rescind is real engine traffic. The log was fresh. Messages were flowing. The
+            confirmation mechanism kept blessing each phantom success because new traffic
+            genuinely did arrive after each one. <strong>Every detector in the system keyed
+            on silence, and this wedge was loud.</strong>
+        </p>
+        <p>
+            The fix tracks consecutive re-serves of the same prompt identity, counting only
+            distinct message ids so that an internal retry is not mistaken for the engine
+            genuinely re-asking. Past a threshold it stops trusting the reported success and
+            records the interaction as unresolved so the metrics stop lying; past a higher
+            one it abandons the game rather than riding a timer the rescind traffic will
+            reset indefinitely.
+        </p>
+        <p>
+            The adversarial review of that fix is the part worth keeping. Prompt identity
+            includes an id that is a static localization key — one very common prompt type
+            carries the same id all game long. Without an exemption, five legitimate
+            priority passes in a single turn would have tripped the detector, and fifteen
+            would have <em>conceded a healthy game</em>. A detector for silent failure that
+            silently destroys working games is a worse defect than the one it fixes.
+        </p>
+
+        <h2>The taxonomy</h2>
+        <p>
+            The node classifier is split so the judgment is pure and testable: one function
+            takes process count, log age, and a log tail and returns a state with evidence
+            lines, doing no I/O whatsoever. A separate layer gathers that data over SSH.
+            The pure half carries 31 unit tests, including tests for the precedence between
+            states. The process exits non-zero when any node needs attention, so a
+            scheduler can gate on it.
+        </p>
+        <table>
+            <tr><th>State</th><th>Meaning</th><th>Representative sub-classes</th></tr>
+            <tr><td>Crash</td><td>Not running, or cannot be confirmed running</td><td>Process absent; stack trace in the tail; stale crash that is not self-recovering</td></tr>
+            <tr><td>Wedge</td><td>Running and not progressing</td><td>Dead desktop session; give-up loop; modal loop; repeated forced advances with no completions; the livelock above</td></tr>
+            <tr><td>Anomaly</td><td>Running, progressing, something is wrong</td><td>Disk nearly full; a prompt no tool could handle; a storm of suspected missed clicks</td></tr>
+            <tr><td>Crawl</td><td>Progressing far too slowly</td><td>Repeated idle nudges; sustained nudging with zero completions</td></tr>
+            <tr><td>Healthy</td><td>Nothing above fired</td><td>—</td></tr>
+        </table>
+        <p>
+            The five states are the buckets. The engineering is in the fourteen or so
+            sub-classes, and <strong>nearly every one exists because it was once a
+            false negative.</strong> Each carries a dated incident citation in the source,
+            which makes the file readable as an outage history.
+        </p>
+
+        <h2>False negatives, and the cost of false positives</h2>
+        <p>
+            Three detectors are worth describing because of what they had to distinguish.
+        </p>
+        <table>
+            <tr><th>Detector</th><th>Why the obvious version failed</th></tr>
+            <tr>
+                <td>Stuck matchmaking</td>
+                <td>"Awaiting match start" is completely normal between games. Flagging it alone produced a false alarm on a node that was actively playing. It only means a wedge when the log has <em>also</em> gone stale — the conjunction is load-bearing.</td>
+            </tr>
+            <tr>
+                <td>Self-heal loop</td>
+                <td>A bot stuck relaunching the client every ninety seconds keeps its log fresh and its process count correct. It slips past both the crash check and the staleness check and reads as perfectly healthy while accomplishing nothing.</td>
+            </tr>
+            <tr>
+                <td>Modal loop</td>
+                <td>An overlay guard "clears" a client-side dialog every cycle, but the dialog never resolves. Activity keeps the log fresh, and the same code path suppresses the nudge that would otherwise escalate. Every existing signal looked fine. Caught by pairing the guard-clear count with a <em>climbing</em> idle counter.</td>
+            </tr>
+        </table>
+        <p>
+            Alert fatigue is managed in both directions, which matters more than it sounds.
+            Known-accepted fall-throughs are suppressed by an explicit allowlist, because
+            one design-gated case was ringing three times a night and would have drowned
+            real anomalies. In the other direction, a node that trips the slow-progress
+            heuristic but <em>is</em> completing games gets demoted to non-severe — some
+            decks are legitimately slow, and a rig-paced node is not a stuck worker.
+            Distinguishing those required querying a wider window for completions than the
+            window used for classification.
+        </p>
+
+        <h2>Error text is not data</h2>
+        <p>
+            The sharpest small bug in the system: the fleet probe counted running processes
+            by parsing the output of a remote command. When SSH could not reach a host, it
+            printed a connection error to standard output — and that error contains the
+            host's IP address. The leading octet parsed cleanly as a number.
+        </p>
+        <p>
+            An unreachable machine therefore reported a process count of 100 and was
+            classified as the healthiest node on the fleet. <strong>A node that was
+            completely down read as the best one running.</strong> The guard is trivial;
+            the lesson is that a parser must distinguish a channel carrying data from the
+            same channel carrying a complaint.
+        </p>
+
+        <h2>Recovery has to assume nobody is coming</h2>
+        <p>
+            Early navigation failures called exit. That is defensible when a supervisor
+            restarts the process, and indefensible otherwise: a client update plus a stray
+            browser window once killed every node for hours, and each manual restart died
+            the same way within seconds.
+        </p>
+        <p>
+            The rule became: never exit on a navigation failure. Escalate instead — clear
+            stray windows, then relaunch the client, then on specific repeat counts invoke
+            the launcher, because a plain relaunch cannot clear an out-of-date-client
+            screen. Cap the escalation, because if the updater has not fixed it by then it
+            is not an update problem. And back off progressively, because machine-gunning
+            reconnection attempts risks an account-level lock — the recovery mechanism
+            must not create a worse failure than the one it is recovering from.
+        </p>
+        <p>
+            One recovery is destructive and therefore gated. A dead interactive desktop
+            session cannot be fixed by restarting the bot; only a reboot clears it. That
+            recovery fires only on the specific evidence of a dead session, is rate-limited
+            to one reboot per node per thirty minutes so a deeper fault cannot become a
+            reboot loop, and refuses to run at all if it does not know which configuration
+            the node should come back up with — coming back up wrong is its own silent
+            failure.
+        </p>
+
+        <h2>Two failure modes that are really one</h2>
+        <p>
+            A screen capture call had no timeout. On a degraded desktop the underlying
+            system call blocks forever, and one node sat inside a single capture for
+            sixty-five minutes. Self-healing never triggered <em>because nothing ever
+            raised</em>. Running the capture on a daemon thread with a fifteen-second join
+            converts an indefinite hang into a fast, catchable exception that existing
+            recovery already knows how to handle. Fifteen seconds never trips a healthy
+            capture, which completes in under a tenth of a second.
+        </p>
+        <p>
+            That is the same failure the classifier detects from the outside as a dead
+            session. One fix sees it from within the process, one from across the network.
+            Neither replaces the other, and the honest note in the code says so: the
+            watchdog stops one hung call from hanging the loop, but a reboot is still the
+            cure for the underlying desktop.
+        </p>
+
+        <h2>Filming is load-bearing, so fix retention</h2>
+        <p>
+            A node hit zero bytes free. Diagnostic screenshots alone held several gigabytes.
+            That blinded screen capture, wedged navigation into a relaunch loop, and blocked
+            the client updater, which needs substantial scratch space.
+        </p>
+        <p>
+            The tempting fix is to take fewer screenshots. The actual fix was retention,
+            because the screenshots are the evidence the whole validation ladder runs on —
+            keep the newest N per category, prune the client's own logs, run the sweep
+            periodically rather than on a schedule someone has to remember. With one
+            exception carved out explicitly: captured samples of prompts the system could
+            not handle are never pruned, because those are not diagnostics, they are the
+            discovery queue.
+        </p>
+
+        <h2>The pattern</h2>
+        <p>
+            Across every failure above, the state needed to detect the problem was already
+            present — in the prompt, in the turn counter, in the retry count, in the
+            process table. The system was looking at the wrong signal. The fixes that stuck
+            were not behavior changes; they were redefinitions of what "progress" or
+            "success" means, each paired with a new detector so the same blindness cannot
+            recur silently.
+        </p>
+        <p>
+            Which produces the operating rule this project now runs on: <strong>every
+            instrument declares its own bias.</strong> The phantom-click rate is documented
+            as a lower bound, because the game's own timer can advance a stuck game and
+            satisfy the check. The stuck counter is documented as directional rather than
+            exact. The liveness gate documents that crashes leave no record, so absence of
+            data is not proof of health. An instrument that flatters is worse than no
+            instrument, because it converts an unknown into a false certainty.
+        </p>
+        <p>
+            And the uncomfortable finding: three separate detector classes exist because a
+            human watched the screen and saw a wedge while the sensor reported healthy.
+            Minutes of watching found what hours of aggregate metrics missed. Automated
+            monitoring is not a replacement for looking at the thing — it is a way to scale
+            what looking taught you.
+        </p>
+
+        <p class="post-back post-back-end"><a href="../index.html#writing">← Writing</a></p>
+    </article>
+</body>
+</html>

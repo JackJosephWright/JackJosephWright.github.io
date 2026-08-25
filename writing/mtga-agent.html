@@ -24,7 +24,7 @@
             <dt>Status</dt><dd>In development. Mechanics-discovery phase; agent layer deliberately not yet wired.</dd>
             <dt>Role</dt><dd>Sole engineer</dd>
             <dt>Stack</dt><dd>Python, OpenCV, SciPy, pyautogui / pydirectinput, LLM pilot, VMware fleet</dd>
-            <dt>Surface</dt><dd>20 registered tools, 1,153 test functions across 94 files, 10 captured replay fixtures</dd>
+            <dt>Surface</dt><dd>~34,000 lines across 136 modules. 20 registered tools, 1,153 test functions, 10 captured replay fixtures.</dd>
             <dt>Repo</dt><dd>Private</dd>
         </dl>
 
@@ -116,6 +116,14 @@
             than from any cleverness in the vision code.
         </p>
 
+        <p>
+            One class of prompt breaks the rule, and it is the reason the vision layer
+            cannot be deleted entirely: some interfaces are drawn entirely client-side and
+            emit no engine message at all, while the previous request sits pending. They
+            are invisible to the log path <em>by construction</em>. Those must be detected
+            visually — a genuine exception, enumerated rather than papered over.
+        </p>
+
         <h2>Resolving identity to position</h2>
         <p>
             The log identifies every object by instance id. Clicking requires a position.
@@ -138,6 +146,66 @@
             <tr><td>Halo detection alone, static benchmark corpus</td><td>78% located, 56% exact</td></tr>
             <tr><td>Halo detection plus hover verification, live</td><td>≥95%</td></tr>
         </table>
+
+        <h2>Actuation is a physical-plausibility problem</h2>
+        <p>
+            Driving a game client is not calling an API. The client is a real-time engine
+            that interprets input the way it would interpret a hand, and most of the
+            actuation layer encodes that.
+        </p>
+        <table>
+            <tr><th>Naive approach</th><th>Why it fails</th></tr>
+            <tr>
+                <td>Click, then immediately move on</td>
+                <td>The engine processes pointer-release on its <em>next</em> frame. Moving the cursor off the element within milliseconds means the release is interpreted as a drag-away and discarded. A grace period is required because a human hand never leaves that fast.</td>
+            </tr>
+            <tr>
+                <td>Fast press-and-release on a button</td>
+                <td>Buttons that pulse swallow a fast click outright. Every pulsing control needs a click held for a beat.</td>
+            </tr>
+            <tr>
+                <td>Drag as a teleport from A to B</td>
+                <td>The engine's drag detector needs dwell at the origin and a small initial motion before it will detach the object. Jumping straight to the destination moves the cursor correctly and picks up nothing.</td>
+            </tr>
+            <tr>
+                <td>Leave the cursor wherever it landed</td>
+                <td>A resting cursor enlarges the card under it, which occludes its neighbours and corrupts the <em>next</em> scan. Every action ends by parking the cursor somewhere harmless.</td>
+            </tr>
+        </table>
+
+        <h2>Stability is not readiness</h2>
+        <p>
+            Acting before the interface finishes rendering is the root of an entire family
+            of swallowed clicks. The general fix is a settle gate that waits for the frame
+            to stop changing — but a naive frame difference never settles, because the
+            game's background animates continuously.
+        </p>
+        <p>
+            The working version thresholds by magnitude: count only pixels whose change
+            exceeds a floor, and require the changed fraction to stay under one percent
+            across several consecutive polls. That threshold is not a guess. Measured live,
+            a settled board reads under half a percent frame-to-frame while animations read
+            three to fifteen percent — roughly a 350-fold separation, so the threshold sits
+            in a wide dead zone rather than on a cliff. When the gate times out it says so
+            loudly, because acting on an unsettled interface must be counted rather than
+            buried.
+        </p>
+        <p>
+            Then the harder lesson. One prompt arrives while the client is still showing an
+            introductory splash — <strong>a perfectly stable frame.</strong> The settle gate
+            passes immediately and the click lands on the splash screen. That interaction
+            retried on essentially every attempt for the entire life of the project before
+            the cause was understood.
+        </p>
+        <p>
+            Stability is necessary and not sufficient. What is actually needed is a
+            readiness predicate: the specific control I intend to click exists on screen
+            <em>and</em> is interactive. Those are also different — the control can render
+            while the hand is still being dealt, and clicks against it are discarded. The
+            fix that worked is a ladder: poll for the control to exist, settle again, click
+            and hold, then verify the control is gone and re-click at its current position
+            if it is not.
+        </p>
 
         <h2>Tool contract</h2>
         <p>
@@ -188,6 +256,55 @@
             work queue.
         </p>
 
+        <h2>Verification: treating success as a hypothesis</h2>
+        <p>
+            The governing rule of the tool contract is one sentence: <strong>a tool may
+            never report success it did not verify. Clicked is not worked.</strong> This
+            is harder than it sounds, because a GUI automation layer has no natural way to
+            observe its own effect — the click either did something or it didn't, and the
+            screen looks broadly similar either way.
+        </p>
+        <p>
+            The mechanism is confirm-or-demote. A tool reporting success does not finalize
+            the interaction. It enters a provisional hold, and confirmation requires new
+            engine traffic carrying a message id above a baseline captured at dispatch
+            time. If that traffic never arrives before a deadline, the success is demoted:
+            recorded as unresolved, written to a scoreboard as a phantom, the screen
+            photographed for diagnosis, a nudge fired, and the interaction retried. A
+            phantom counts against the retry budget — otherwise a tool that phantom-succeeds
+            every time loops forever.
+        </p>
+        <p>
+            The deadline is not a constant. It varies per prompt type, derived from game
+            semantics: prompts that wait on the opponent get far longer windows than
+            self-resolving ones, because otherwise the detector would be measuring the
+            opponent's thinking time rather than our actuation. Mulligan and blocker
+            declarations get the most latitude; a land drop gets very little.
+        </p>
+        <p>
+            Two failure classes are named and tracked separately, because they need
+            different fixes:
+        </p>
+        <table>
+            <tr><th>Class</th><th>Definition</th></tr>
+            <tr><td>Phantom success</td><td>The tool clicks, reports success, and the game did not advance.</td></tr>
+            <tr><td>Unexecuted choice</td><td>The tool accepts a decision parameter, logs it, and then performs its default anyway. The ignored decision looks fine because the game still advances — this is the one that would silently neuter a pilot.</td></tr>
+        </table>
+        <p>
+            A third category makes the measurement honest. When the game advances, that is
+            not proof <em>we</em> advanced it — the client's own turn timer or an opponent
+            action can move a stuck game along. Until resolved, phantom, and timer-rescued
+            are separated, any measured phantom rate is a lower bound rather than a
+            number. Stating that explicitly, rather than quoting the flattering figure, is
+            the difference between an instrument and a dashboard.
+        </p>
+        <p>
+            Every tool must ship a test that feeds a non-default parameter and asserts a
+            distinct mechanic fires. Nothing merges without it, because that test is the
+            only thing standing between the project and a full set of tools that quietly
+            ignore the pilot.
+        </p>
+
         <h2>Silent failure</h2>
         <p>
             The most instructive defect in the project produced no error. A client update
@@ -215,6 +332,39 @@
             every instrument the harness currently has.
         </p>
 
+        <h2>The coverage ladder</h2>
+        <p>
+            Interface coverage is not a boolean. Each interaction class occupies a rung,
+            and the rungs are stored as data rather than prose — the status board is
+            generated from that file and never hand-edited, so a claim of progress has to
+            be made in the place the graph reads.
+        </p>
+        <table>
+            <tr><th>Rung</th><th>Meaning</th></tr>
+            <tr><td>Anticipated</td><td>The prompt type is known to exist but has never been observed. No deck has forced it.</td></tr>
+            <tr><td>Discovered</td><td>Observed live, evidence banked, no working execution path yet.</td></tr>
+            <tr><td>Passes</td><td>A tool claims it and the game advances — at a required efficiency. An attempt that needed the retry net is a failure datum, not a pass.</td></tr>
+            <tr><td>Surfaced</td><td>The choice is routed through the decision socket rather than a hardcoded default, so an external policy can command it.</td></tr>
+            <tr><td>Chaos soak</td><td>Sustained volume under a random-choice policy, with multiple option classes genuinely exercised.</td></tr>
+            <tr><td>Commandable</td><td>An arbitrary legal option can be commanded and the game verified to have done that thing.</td></tr>
+        </table>
+        <p>
+            The hard rule is that no rung transition happens without attached evidence — a
+            commit, a fixture, or scoreboard rows. Demotion is symmetric and happens on the
+            same terms: one interaction was demoted after measurement showed a 0.3%
+            first-attempt success rate that had been masked since the day it shipped.
+        </p>
+        <p>
+            Only three of twenty-eight interaction classes have reached the top rung, and
+            the reason is instructive. Each required building a bespoke outcome oracle
+            first — a way to prove that what the game did matches what was commanded.
+            Proving the library search worked meant commanding a specific basic land
+            hidden behind a nineteen-card sorted prefix, then reading the engine's own
+            record of what was found. Proving blocks worked meant comparing the engine's
+            declared attacker-blocker pairs against the commanded pairing. The bottleneck
+            is not execution. It is verification.
+        </p>
+
         <h2>Evaluation</h2>
         <p>
             Five distinct test shapes, with enforced vocabulary — sessions are required to
@@ -229,6 +379,23 @@
             <tr><td>Isolated live</td><td>Boot directly into one specific game state, fire one tool, observe the outcome.</td></tr>
             <tr><td>Soak</td><td>Unattended overnight games across decks and opponents. Catches what only volume catches.</td></tr>
         </table>
+        <p>
+            The standard the project holds itself to is stated as a rejection of the
+            obvious metric: <strong>games completed with zero bails is not validation. A
+            bot that passes on every decision also completes games with zero bails.</strong>
+            Acceptance is therefore per-mechanic — this interaction was exercised this many
+            times, this many resolved, this many were demoted — and the instruments are
+            documented with their own known biases rather than presented as exact.
+        </p>
+        <p>
+            Soak runs use a deliberately perverse policy. Rather than taking the default
+            option, the harness can be configured to select the <em>least-sampled</em>
+            legal option at each choice point, breaking ties randomly. This converts
+            unattended overnight hours into frontier coverage: it exercises the parts of
+            the choice space a sensible policy would never visit, which is exactly where
+            accepts-a-parameter-but-ignores-it defects live. Losing games is irrelevant;
+            only mechanical failures count.
+        </p>
         <p>
             The gate between mechanics work and pilot work is explicit and quantified:
             twenty completed games against the tutorial AI and twenty against human
@@ -263,6 +430,11 @@
             as drag on win probability and nowhere else. It remains firewalled: it reads
             everything, it decides nothing.
         </p>
+        <p>
+            The measurement program behind it — 5.1M games, what a board position is
+            actually worth, and why static features cannot price an attack — is written up
+            separately: <a href="win-prob.html">Measuring what a Magic position is worth →</a>
+        </p>
 
         <h2>Why a language model and not reinforcement learning</h2>
         <table>
@@ -291,6 +463,8 @@
             <li>Interface coverage is incomplete by construction — the discovery loop exists precisely because the catalog is not finished.</li>
             <li>Validation currently proves that prompts clear, not that choices are good. Closing that gap is what the critic is for, and it is not yet closed.</li>
             <li>Client updates invalidate templates and calibrated coordinates together; each update costs a re-capture cycle.</li>
+            <li>The coordinate relationship between the analysis frame and the live screen is documented folklore rather than a function — several conventions coexist and the offset varies per machine. Every new modal costs a live measurement session. The known fix is to locate controls visually instead of storing coordinates.</li>
+            <li>Card location searches the hand region, so cards cast from exile, graveyard, or the top of the library are a structural miss rather than a tuning problem — and they surface as what looks like a vision bug.</li>
             <li>Restricted to unranked and tutorial queues. A stuck bot in a ranked queue would carry real consequences, so no code path selects one.</li>
         </ul>
 
