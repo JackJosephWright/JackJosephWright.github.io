@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ask it to refute, not to check — Jack Wright</title>
+    <meta name="description" content="Adversarial verification for LLM pipelines: refute-by-default verifiers, perspective diversity, graded calibration sets, and the rubric that can't see the deciding variable.">
+    <meta property="og:title" content="Ask it to refute, not to check">
+    <meta property="og:description" content="Adversarial verification for LLM pipelines: refute-by-default verifiers and perspective diversity.">
+    <meta property="og:type" content="article">
+    <meta name="twitter:card" content="summary">
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='18' fill='%23b4560e'/%3E%3Ctext x='50' y='68' font-size='52' font-family='Georgia,serif' font-weight='bold' fill='white' text-anchor='middle'%3EJW%3C/text%3E%3C/svg%3E">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../styles.css">
+</head>
+<body>
+    <article class="post">
+        <p class="post-back"><a href="../index.html#writing">← Writing</a></p>
+        <h1>Ask it to refute, not to check</h1>
+        <p class="post-meta">Jack Wright · August 2026</p>
+
+        <p class="lede">
+            Ask a model "is this finding real?" and it will agree with you. Ask it to
+            <em>refute</em> the finding, instruct it to return refuted when uncertain, and
+            the survivors are worth acting on.
+        </p>
+
+        <p>
+            The framing does the work. "Verify this" invites confirmation; the model's
+            easiest path is to restate your claim with supporting detail. "Refute this,
+            and default to refuted if you cannot establish it" inverts the burden of
+            proof, and the difference in yield is not subtle:
+        </p>
+
+        <ul>
+            <li>On a generated candidate list, refute-by-default verification removed
+                roughly <strong>40%</strong> as unverifiable or wrong — before anyone spent
+                human time on them.</li>
+            <li>On a code-review pass, about <strong>29 raw findings became 8
+                confirmed</strong>. The other 21 were plausible, well-argued, and not
+                real.</li>
+        </ul>
+
+        <h2>Why this matters more as generation gets cheaper</h2>
+
+        <p>
+            Generating 100 candidate findings is nearly free. Having a human read 100
+            findings is not, and the cost isn't only time: a list where a third of the
+            entries are wrong trains its readers to stop trusting the list. One bad batch
+            can end adoption of a system that is right most of the time.
+        </p>
+
+        <p>
+            Verification, not generation, is the throughput gate on anything that outputs
+            candidates for humans. Budget accordingly — it is normal for the verification
+            half of one of these pipelines to cost more than the half that does the actual
+            work.
+        </p>
+
+        <h2>Make verifiers perspective-diverse, not redundant</h2>
+
+        <p>
+            The obvious scaling move is to run the same skeptic three times and take a
+            majority. This is mostly wasted spend. Three identical skeptics catch one
+            failure mode three times over, and they share every blind spot.
+        </p>
+
+        <p>
+            Give each verifier a different lens instead. On a code finding: one checks
+            correctness, one checks security implications, one checks whether the reported
+            behavior actually reproduces. Three lenses catch three classes of error, and
+            disagreement between them is itself signal — it usually means the finding is
+            real but described wrong.
+        </p>
+
+        <p>
+            Kill the finding when a majority refute. Keep the refutations attached to the
+            survivors; a reviewer who can see the strongest argument against a finding
+            evaluates it faster than one who only sees the case for it.
+        </p>
+
+        <h2>Calibrate before you trust any of it</h2>
+
+        <p>
+            None of this means anything without a graded set. Hand-grade 15–25 cases
+            before the first real run, then report recall and false-positive rate as
+            numbers. A pipeline at 92% recall and 0% false positives on a graded set is a
+            claim you can defend. The same pipeline with no graded set is a feeling.
+        </p>
+
+        <p>
+            Include <strong>negative controls</strong> — items engineered to look like
+            hits but that aren't. These catch the failure mode a naive answer key walks
+            straight into, where every case in your key is a true positive and you learn
+            nothing about the system's appetite for inventing them.
+        </p>
+
+        <h2>The trap: a rubric that can't see the deciding variable</h2>
+
+        <p>
+            The most expensive verification bug I've hit produced no false alarm at all.
+            It produced a clean bill of health.
+        </p>
+
+        <p>
+            A strictness rubric scored both sides of a comparison 5/5 and rendered the row
+            green. Underneath, the actual penalty figure had doubled. The rubric had no
+            access to magnitudes — it could not be wrong, because it could only ever be
+            irrelevant. It was answering a question adjacent to the one that mattered, in
+            a confident voice.
+        </p>
+
+        <p>
+            <strong>When an assessment comes out clean, check whether the assessor could
+            even see the thing that would have made it dirty.</strong> That question has
+            found more real defects for me than any amount of prompt tuning.
+        </p>
+
+        <h2>And the root cause is usually upstream</h2>
+
+        <p>
+            In that same case, the assessors were not the problem. The extraction schema
+            had no field for numeric values, so no figure ever reached them. Every hour
+            spent improving the assessor prompt would have accomplished exactly nothing,
+            because the information had already been discarded two stages earlier.
+        </p>
+
+        <p>
+            When a component gives bad output, the first question is not "how do I fix
+            this component." It's "did this component ever receive what it needed?" In a
+            multi-stage LLM pipeline the answer is no more often than you would expect.
+        </p>
+
+        <p class="post-back post-back-end"><a href="../index.html#writing">← Writing</a></p>
+    </article>
+</body>
+</html>
