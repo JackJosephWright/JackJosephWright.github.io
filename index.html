@@ -88,7 +88,8 @@
                         <li>Mode 2: multi-turn coaching that walks a teacher through internalizing a plan before class.</li>
                         <li>Core requirement: quote accuracy at scale. Every passage a plan cites is extracted verbatim from the purchased book text, not recalled by the model.</li>
                         <li>Extraction is a five-strategy parser cascade with guards against the silent failure — a parse that succeeds and is wrong. Chapters carry source offsets, so every quotation is traceable to a position in the book.</li>
-                        <li>In deployment. The 4 units it generated are the current school year's reading curriculum, not a pilot corpus — K–8, 100–120 lessons, all 100–120 human-reviewed and passed before entering classrooms.</li>
+                        <li>In deployment. 900 lessons — 9 grade levels × 4 units × 25 lessons — are the current school year's K–8 reading curriculum, not a pilot corpus. All 900 human-reviewed and passed before entering classrooms.</li>
+                        <li>Conditioned on grade level, not just grade band, so lessons are at-level: two grades inside one band reading the same text get different vocabulary load, scaffolding, and practice expectations.</li>
                         <li>Teacher adversarial review is the correction signal: reviewers attack each plan, and captured corrections improve the next generation run.</li>
                         <li>Per-mode model selection + prompt caching: ~$0.05 per generated plan; full-school usage projected at tens of dollars per month.</li>
                     </ul>
@@ -201,7 +202,7 @@
                 </li>
                 <li>
                     <a href="writing/lesson-plan-generator.html">Lesson plan generator with quote grounding</a>
-                    <p>In deployment as the current school year's K–8 reading curriculum: 100–120 lessons across 4 units, every one human-reviewed. The five-strategy extraction cascade and its guards, verbatim quote grounding with source offsets, teacher adversarial review as correction signal, and per-mode model cost.</p>
+                    <p>In deployment as the current school year's K–8 reading curriculum: 900 lessons across 36 units, every one human-reviewed. The five-strategy extraction cascade and its guards, verbatim quote grounding with source offsets, grade-level conditioning for at-level plans, and teacher adversarial review as correction signal.</p>
                 </li>
             </ul>
         </section>
