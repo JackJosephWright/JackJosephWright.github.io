@@ -43,6 +43,25 @@
             hard ceiling rather than a gain.
         </p>
 
+        <h2>Corpus</h2>
+        <table>
+            <tr><th>Set</th><th>Games</th><th>Card episodes</th></tr>
+            <tr><td>DSK</td><td>1,011,949</td><td>6,297,259</td></tr>
+            <tr><td>DFT</td><td>857,667</td><td>5,329,470</td></tr>
+            <tr><td>FDN</td><td>791,159</td><td>4,917,196</td></tr>
+            <tr><td>FIN</td><td>769,659</td><td>4,757,043</td></tr>
+            <tr><td>EOE</td><td>563,418</td><td>3,483,867</td></tr>
+            <tr><td>TLA</td><td>562,924</td><td>3,536,284</td></tr>
+            <tr><td>TDM</td><td>552,428</td><td>3,086,796</td></tr>
+            <tr><td><strong>Total</strong></td><td><strong>5,109,204</strong></td><td><strong>31,407,915</strong></td></tr>
+        </table>
+        <p>
+            An "episode" is one card's life in one game — entering a zone, persisting, and
+            leaving. The card-lifespan tables are built over those; the win-probability
+            models are built over game-turn rows and end-of-turn snapshots drawn from the
+            same corpus.
+        </p>
+
         <h2>Data handling</h2>
         <table>
             <tr><th>Concern</th><th>Approach</th></tr>
@@ -118,10 +137,15 @@
             Predicting every card at its turn-level average outright beats the
             bucket-based prediction. The buckets add noise, not signal. Within the same
             set, rarity, mana value and colour, cards spread a median of 6.5 percentage
-            points and as much as 22.2 — two rares at the same cost and colour, identical
-            on every face attribute, twenty-two points apart in win rate. Rarity itself is
-            nearly flat and not even monotonic, because the deck a card appears in washes
-            it out.
+            points and as much as 22.2.
+        </p>
+        <p>
+            The extreme case: in Final Fantasy, <em>The Masamune</em> and <em>Jill, Shiva's
+            Dominant</em> are both rares, both three mana, both colourless. Identical on
+            every attribute a bucket can see. They win at <strong>41.4% and 63.6%</strong>
+            respectively — twenty-two points apart. Rarity itself is nearly flat and not
+            even monotonic across the corpus (mythic .556, common .545, rare .541, uncommon
+            .531), because the quality of the decks a card appears in washes the signal out.
         </p>
 
         <h2>The correction: state the denominator</h2>
@@ -140,7 +164,42 @@
             published headline was corrected rather than quietly amended.
         </p>
 
-        <h2>Finding 3: you cannot buy combat awareness with static state</h2>
+        <h2>Finding 3: measured win rate beats printed stats, but does not replace them</h2>
+        <p>
+            The motivating case is exact. Duskmourn contains precisely four 2/5 creatures.
+            To any model that represents a board by printed power and toughness, they are
+            the same object. <em>Ghostly Dancers</em> wins at 72.0%. <em>Clammy Prowler</em>
+            wins at 54.5%.
+        </p>
+        <p>
+            Tested head to head — identical rows, five folds, only the card-representation
+            block varying:
+        </p>
+        <table>
+            <tr><th>Board representation</th><th>Brier skill</th><th>AUC</th></tr>
+            <tr><td>Counts only</td><td>0.17817</td><td>0.7372</td></tr>
+            <tr><td>Counts + printed power/toughness</td><td>0.18951</td><td>0.7448</td></tr>
+            <tr><td>Counts + measured win rate</td><td>0.19705</td><td>0.7518</td></tr>
+            <tr><td>Counts + both</td><td>0.20552</td><td>0.7574</td></tr>
+        </table>
+        <p>
+            Substitution wins: carrying one representation, carry the measured win rate.
+            But the strong form of the claim fails — printed stats are not redundant once
+            win rate is known, and the two together beat either alone. The likely reason is
+            static combat geometry. A board whose creatures outclass the opponent's is
+            worth something at any speed, and no per-card win rate encodes that
+            relationship.
+        </p>
+        <p>
+            Because Finding 1 showed aggregation alone is worth a great deal, the obvious
+            objection is that measured win rate only won because it received better
+            treatment. That was priced directly rather than left as a caveat: giving
+            printed stats the identical distributional treatment recovers only about a
+            quarter of the gap. <strong>Roughly three quarters of the advantage is
+            genuinely the representation</strong>, not the parameterisation.
+        </p>
+
+        <h2>Finding 4: you cannot buy combat awareness with static state</h2>
         <p>
             The strongest result is a negative one. A value function was graded not on
             calibration but on whether the change in value across a transition recovers the
@@ -166,7 +225,7 @@
             transition itself gets priced, or the reasoning layer has to be told the rule.
         </p>
 
-        <h2>Finding 4: the initiative asymmetry</h2>
+        <h2>Finding 5: the initiative asymmetry</h2>
         <p>
             One fitted coefficient turned out to be a finding on its own. A flag
             distinguishing "this snapshot is the end of my turn" from "the end of theirs"
@@ -180,18 +239,29 @@
             channel: unspent mana on your own turn carries a negative weight.
         </p>
 
-        <h2>Finding 5: the value function that teaches a bot to hoard</h2>
+        <h2>Finding 6: the value function that teaches a bot to hoard</h2>
         <p>
             Card win-rate tables can be built conditioned on different events, and the
             choice of event is a choice of incentive.
         </p>
         <p>
             Conditioned on <em>holding</em> a card, values rise with turn number — a card
-            in hand on turn 10 correlates with winning more than the same card on turn 1.
-            That is true as correlation and false as advice: still holding cards late means
-            the game went long, which means you were probably ahead. <strong>A critic fed
-            those values learns to hoard.</strong> Conditioning instead on <em>casting</em>
-            the card removes the confound, because it conditions on having done something.
+            in hand on turn 10 correlates with winning more than the same card on turn 1,
+            swinging 5.3 percentage points trough to peak. That is true as correlation and
+            false as advice: still holding cards late means the game went long, which means
+            you were probably ahead. <strong>A critic fed those values learns to
+            hoard.</strong> Conditioning instead on <em>casting</em> the card removes the
+            confound — it conditions on having done something — and the same curve goes
+            nearly flat, moving half a point across ten turns.
+        </p>
+        <p>
+            Cards genuinely do have turn curves, so this is not an argument for ignoring
+            turn. Across 1,942 cards, 84% of across-turn variation remains real signal even
+            after removing the global turn trend — the same order of magnitude as the
+            entire card-quality contribution. Two Duskmourn two-drops, <em>Silent
+            Hallcreeper</em> and <em>Piggy Bank</em>, sit 4.3 points apart on turn 2 and
+            10.0 points apart by turn 10. Pooled across all two-drops that divergence is
+            invisible; the curve is flat. The effect only exists per card.
         </p>
         <p>
             The same audit found the shipped model reads 0.184 for a perfectly even board on

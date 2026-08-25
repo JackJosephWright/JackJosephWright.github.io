@@ -137,9 +137,22 @@
             positions, and read the resulting hover events out of the log to learn which
             object is under the cursor at each point. Identity comes from the log,
             position comes from the cursor, and the mapping is measured rather than
-            assumed. Playable-card candidates come from detecting the client's
-            selection halo by hue and brightness, then finding peaks in a per-column
-            projection.
+            assumed.
+        </p>
+        <p>
+            One detail makes the sweep sound rather than superstitious: the log's byte
+            length is snapshotted <em>before</em> the cursor moves, and only bytes appended
+            after that point are parsed. Without it, a hover event from minutes earlier in
+            the session matches on the very first step of the sweep and the mapping is
+            confidently wrong.
+        </p>
+        <p>
+            Candidate positions come from the client's own selection halo — a cyan glow
+            drawn around playable cards. Masking hue 80–110 at saturation 80+ and
+            brightness 240 or above isolates the bright pulse specifically while rejecting
+            cyan that appears in card art and playmat decoration. Counting mask hits per
+            column within a zone band and running peak detection over that projection
+            yields card edges.
         </p>
         <table>
             <tr><th>Method</th><th>Hit rate</th></tr>
