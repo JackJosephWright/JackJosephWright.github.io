@@ -265,6 +265,13 @@ a:hover { text-decoration: underline; }
 }
 
 .pubs strong { color: var(--ink); font-weight: 600; }
+
+.pub-note {
+    display: block;
+    margin-top: 0.35rem;
+    font-size: 0.9rem;
+    color: var(--ink-faint);
+}
 .pubs a { font-weight: 600; white-space: nowrap; }
 
 /* ---------- principles ---------- */
