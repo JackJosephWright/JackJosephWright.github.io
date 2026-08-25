@@ -21,7 +21,8 @@
         <h1>Lesson plan generator with quote grounding</h1>
 
         <dl class="spec">
-            <dt>Status</dt><dd>Pilot</dd>
+            <dt>Status</dt><dd>In deployment</dd>
+            <dt>Scope</dt><dd>The current school year's reading curriculum. Not a pilot corpus.</dd>
             <dt>Role</dt><dd>Sole engineer</dd>
             <dt>Stack</dt><dd>Python, Flask, SQLite, Claude Sonnet 4.5 / Haiku 4.5</dd>
             <dt>Coverage</dt><dd>K–8. Grade bands K–2, 3–5, 6–8</dd>
@@ -35,6 +36,11 @@
             uneven in quality across a network. Teachers need plans that cite the source
             text accurately, align to stated instructional expectations, and are ready to
             teach without further preparation.
+        </p>
+        <p>
+            The output is not a demonstration corpus. The four units this system generated
+            are the reading curriculum for the current school year, and the plans go into
+            classrooms. That sets the accuracy bar described below.
         </p>
 
         <h2>Interface</h2>
@@ -171,7 +177,7 @@
 
         <h2>Limitations</h2>
         <ul>
-            <li>Pilot stage. Four units built; not yet deployed network-wide.</li>
+            <li>Four units built to date — the current year's reading. Each additional unit requires the same extraction and full-review cycle.</li>
             <li>Quote fidelity is bounded by extraction quality. A poorly digitized source degrades grounding before generation ever runs.</li>
             <li>Every lesson requires human review to ship. Review is the throughput constraint, by design — the system reduces drafting cost, not approval cost.</li>
             <li>Requires a machine-readable source text.</li>
