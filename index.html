@@ -199,15 +199,15 @@
             <p class="section-note">System writeups: problem, interface, pipeline, evaluation, limitations.</p>
             <ul class="writing-list">
                 <li>
-                    <a href="writing/mtga-agent.html">Autonomous agent for Magic: The Gathering Arena</a>
-                    <p>Optimal play in Magic is at least as hard as the Halting Problem. Why that never has to be solved, an observe-heavy architecture that reduced computer vision to five primitives, treating every reported success as a falsifiable hypothesis, and why stability is not readiness.</p>
+                    <a href="writing/mtga-agent.html">Architecture of an LLM agent that plays Magic: The Gathering Arena</a>
+                    <p>Optimal play in Magic is at least as hard as the Halting Problem. How the game client makes that tractable, why reading the game log instead of the screen cut computer vision down to five primitives, and how every reported success gets checked against the engine before it counts.</p>
                 </li>
                 <li>
-                    <a href="writing/wedge-detection.html">A wedge is not always quiet</a>
-                    <p>Reliability engineering for an unattended fleet. A detector that read a downed machine as the healthiest on the fleet, a livelock that logged 2,089 consecutive successes, and why every freeze turned out to be a sensing failure before it was a behavior failure.</p>
+                    <a href="writing/wedge-detection.html">Detecting stuck bots that report success</a>
+                    <p>Failure modes on an unattended VM fleet where every health signal reads green: an idle timeout that could never fire, a probe that classified a downed machine as the healthiest one, and a livelock that logged 2,089 consecutive successes over several days.</p>
                 </li>
                 <li>
-                    <a href="writing/win-prob.html">Measuring what a Magic position is worth</a>
+                    <a href="writing/win-prob.html">What predicts winning in Magic: 5.1M games analysed</a>
                     <p>An empirical study over 5.1M games. Re-aggregating the same features beat adding new ones by 71%, card face attributes explain 3% of card quality, static state cannot price an attack at all, and a value function conditioned on the wrong event teaches a bot to hoard.</p>
                 </li>
                 <li>

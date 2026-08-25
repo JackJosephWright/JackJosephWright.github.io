@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Measuring what a Magic position is worth — Jack Wright</title>
+    <title>What predicts winning in Magic: 5.1M games analysed — Jack Wright</title>
     <meta name="description" content="An empirical study over 5.1M games: how to represent a board state, why re-aggregation beat new data, why static features cannot price an attack, and the value function that teaches a bot to hoard.">
-    <meta property="og:title" content="Measuring what a Magic position is worth">
+    <meta property="og:title" content="What predicts winning in Magic: 5.1M games analysed">
     <meta property="og:description" content="An empirical study over 5.1M games of Magic: board representation, aggregation, and the limits of static state value.">
     <meta property="og:type" content="article">
     <meta name="twitter:card" content="summary">
@@ -18,7 +18,7 @@
 <body>
     <article class="post">
         <p class="post-back"><a href="../index.html#writing">← Writing</a></p>
-        <h1>Measuring what a Magic position is worth</h1>
+        <h1>What predicts winning in Magic: 5.1M games analysed</h1>
 
         <dl class="spec">
             <dt>Status</dt><dd>Offline measurement program. Deliberately not fed to the live pilot — see the firewall section.</dd>
@@ -39,8 +39,8 @@
             what the right representation of a board actually is.
         </p>
         <p>
-            The answers were mostly not the expected ones, and the most useful result was a
-            hard ceiling rather than a gain.
+            Most of the answers went against the initial expectation, and the most useful
+            result was a limit rather than an improvement.
         </p>
 
         <h2>Corpus</h2>
@@ -159,9 +159,9 @@
             counts regardless.
         </p>
         <p>
-            This is filed as a standing method trap rather than a one-off mistake:
-            <strong>a percentage without its denominator is not a result.</strong> The
-            published headline was corrected rather than quietly amended.
+            It is filed as a recurring method trap rather than a one-off mistake: a
+            percentage is not interpretable without its denominator. The published headline
+            was corrected rather than quietly amended.
         </p>
 
         <h2>Finding 3: measured win rate beats printed stats, but does not replace them</h2>
@@ -199,11 +199,11 @@
             genuinely the representation</strong>, not the parameterisation.
         </p>
 
-        <h2>Finding 4: you cannot buy combat awareness with static state</h2>
+        <h2>Finding 4: static board features cannot price an attack</h2>
         <p>
-            The strongest result is a negative one. A value function was graded not on
-            calibration but on whether the change in value across a transition recovers the
-            realised value of a known-good action. Two actions, opposite outcomes:
+            This is a negative result. The value function was graded not on calibration
+            but on whether its change across a transition recovers the realised value of a
+            known-good action. Two actions came out opposite:
         </p>
         <table>
             <tr><th>Action</th><th>Realised gap</th><th>Shipped model</th><th>+16 static features</th></tr>
@@ -225,21 +225,20 @@
             transition itself gets priced, or the reasoning layer has to be told the rule.
         </p>
 
-        <h2>Finding 5: the initiative asymmetry</h2>
+        <h2>Finding 5: ending your own turn is worse than ending theirs</h2>
         <p>
-            One fitted coefficient turned out to be a finding on its own. A flag
-            distinguishing "this snapshot is the end of my turn" from "the end of theirs"
-            carries a large negative weight: <strong>all else exactly equal, the end of
-            your own turn is a worse position than the end of your opponent's.</strong>
+            A flag distinguishing "this snapshot is the end of my turn" from "the end of
+            theirs" carries a large negative weight. All else equal, the end of your own
+            turn is a worse position than the end of your opponent's.
         </p>
         <p>
-            Which is obvious once stated — you are tapped out and it is about to be their
-            move — and was invisible to every previous model because none of them recorded
-            whose turn the snapshot came from. A related coefficient confirms the same
-            channel: unspent mana on your own turn carries a negative weight.
+            The reason is straightforward once stated: you are tapped out and it is about
+            to be their move. No previous model could see it because none recorded whose
+            turn the snapshot came from. A related coefficient shows the same effect —
+            unspent mana on your own turn carries a negative weight.
         </p>
 
-        <h2>Finding 6: the value function that teaches a bot to hoard</h2>
+        <h2>Finding 6: conditioning on the wrong event teaches a bot to hoard</h2>
         <p>
             Card win-rate tables can be built conditioned on different events, and the
             choice of event is a choice of incentive.
