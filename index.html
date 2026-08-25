@@ -3,100 +3,243 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Data Science Projects</title>
+    <title>Jack Wright — AI / Automation Engineer</title>
+    <meta name="description" content="Jack Wright builds data platforms, applied LLM systems, and tools people actually use. Portfolio: contract intelligence, analytics engineering, autonomous agents, and MTG research.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="styles.css">
-    <!-- Adding Google Fonts for better typography -->
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
 </head>
 <body>
-    <header>
-        <h1>Data Science Projects</h1>
-        <p>Data Science and Engineering Projects</p>
-        <a href="https://www.linkedin.com/in/jack-wright-97b9b61b7/" target="_blank" style="color: #fff; text-decoration: none; font-weight: bold;">
-            Connect with me on LinkedIn
-        </a>
-    </header>
-    <main>
-        <section id="intro">
-            <h2>Welcome</h2>
-            <p>Welcome to my portfolio! I'm Jack Wright, a dedicated data scientist with a diverse background in data analysis, statistical modeling, and machine learning. With a Master’s degree in Data Science and extensive experience across multiple domains—including research, database management, and data engineering—I specialize in transforming complex data into actionable insights.</p>
-            <p>From building advanced data pipelines and automated scrapers to developing machine learning models and conducting statistical analysis, my work spans various fields including financial engineering, community development, and academic research. I have a proven track record of leveraging data to drive impactful decisions, improve processes, and support organizational goals.</p>
-            <p>Explore my portfolio to see how I can help you harness the power of data to achieve your objectives.</p>
-        </section>
-        </section>
-        <section>
-            <h2>Narrative Tree Complexity Metric</h2>
-            <p>I worked with a Psychology research group at the CUNY Grad Center to create a Complexity Metric for research on Interactive Digital Narrative. I used experts in the field to compare pairs of narrative trees, which were then used to create a hierarchy of tree complexities. This expert opinion was then modeled using supervised and unsupervised learning to create a model to assign a Narrative Tree Complexity Metric to new data. I will be a co-author on this paper and continue to work with the group on narrative tree research moving forward.</p>
-            <ul>
-                <li><a href="https://rpubs.com/JackJWright/902090" target="_blank">Read the paper</a></li>
-                <li><a href="https://vimeo.com/manage/videos/706364815/0112a4ac2b" target="_blank">Watch the presentation</a></li>
-                <li><a href="https://ctree-postgres.herokuapp.com/" target="_blank">Visit the data collection website</a></li>
-            </ul>
-        </section>
-        <section>
-            <h2>Linear Regression Tool</h2>
-            <p>I created a shiny app that allows users to upload their own data set and visually walk through the steps of creating and analyzing multiple and logistic regression.</p>
-            <ul>
-                <li><a href="https://jwrightzz123.shinyapps.io/regression_decision_tree/" target="_blank">Visit the linear regression tool</a></li>
-            </ul>
-        </section>
-        <section>
-            <h2>Magic: The Gathering Projects</h2>
-            <p>
-                As a lifelong fan of Moneyball and sports metrics, I saw an exciting opportunity to apply data analysis to Magic: The Gathering, a game recognized for its immense complexity and strategic depth. My investigations into this field are driven by a passion for uncovering insights from vast datasets and exploring areas that remain under-analyzed. According to a Technology Review article, Magic: The Gathering is hailed as the world's most complex game, making it a fascinating subject for data-driven exploration.
+    <header class="site-header">
+        <nav class="nav">
+            <span class="nav-name">Jack Wright</span>
+            <div class="nav-links">
+                <a href="#work">Work</a>
+                <a href="#projects">Projects</a>
+                <a href="#skills">Skills</a>
+                <a href="https://github.com/JackJosephWright" target="_blank" rel="noopener">GitHub</a>
+                <a href="https://www.linkedin.com/in/jack-wright-97b9b61b7/" target="_blank" rel="noopener">LinkedIn</a>
+            </div>
+        </nav>
+        <div class="hero">
+            <p class="hero-kicker">AI / Automation Engineer</p>
+            <h1>I turn processes that live in spreadsheets into&nbsp;systems.</h1>
+            <p class="hero-sub">
+                Data platform underneath, AI where judgment is genuinely needed, and a real
+                interface for the person who has to use it. I ship end-to-end and alone —
+                and I can prove the results with numbers, not adjectives.
             </p>
-            <ul>
-                <li><a href="https://jackjosephwright.github.io/mtg_main_page/" target="_blank">Explore my Magic: The Gathering analysis projects here</a></li>
-            </ul>
-            
+            <div class="hero-actions">
+                <a class="btn btn-primary" href="#work">See what I've built</a>
+                <a class="btn" href="https://www.linkedin.com/in/jack-wright-97b9b61b7/" target="_blank" rel="noopener">Connect on LinkedIn</a>
+            </div>
+        </div>
+    </header>
+
+    <main>
+        <section id="about" class="section">
+            <h2><span class="section-num">01</span> About</h2>
+            <div class="prose">
+                <p>
+                    I build the systems a company doesn't have yet. At a commercial solar
+                    EPC I've stood up the analytics warehouse, the internal knowledge
+                    layer, a contract-review engine that reads hundreds of obligations and
+                    tells legal exactly where the gaps are, and a lead engine built from
+                    public records that put a verified target list in front of the sales
+                    team.
+                </p>
+                <p>
+                    The thread through all of it: real evaluation instead of demos,
+                    deterministic logic wherever a decision has to be auditable, models
+                    only where judgment is genuinely needed — and shipping into the tools
+                    people already use, because the best system nobody opens is worth
+                    nothing.
+                </p>
+            </div>
         </section>
-         
-        
-        <section>
-            <h2>Predicting NFL Quarterback Performance with Markov Chains</h2>
-            <p>I created a simulation that predicts the career performance (measured by expected points added) for a quarterback using Markov chain transitions.</p>
-            <ul>
-                <li><a href="https://jackjosephwright.github.io/qb_markov.github.io/" target="_blank">View the report</a></li>
-            </ul>
+
+        <section id="work" class="section">
+            <h2><span class="section-num">02</span> Systems I've shipped</h2>
+            <p class="section-note">Internal production systems, described at the capability level.</p>
+            <div class="card-grid">
+                <article class="card">
+                    <h3>Contract-review engine</h3>
+                    <p>
+                        Extracts 500+ discrete obligations from long-form agreements and
+                        reconciles them against a standard template, producing a coverage
+                        matrix that routes each gap to the right reader. Calibrated on a
+                        hand-graded set at 92% gap recall with zero false positives.
+                    </p>
+                    <p>
+                        The architecture is what makes it trustworthy: decision rules live
+                        in ~150 tested functions, with model reasoning confined to semantic
+                        matching — so legal review can check the logic instead of trusting
+                        a black box.
+                    </p>
+                    <ul class="tags"><li>Applied LLMs</li><li>Document intelligence</li><li>Evaluation</li></ul>
+                </article>
+                <article class="card">
+                    <h3>Analytics warehouse</h3>
+                    <p>
+                        The company's first real data substrate: ingestion, dbt staging and
+                        marts with enforced model contracts, executive-facing views, CI,
+                        and scheduled orchestration on managed infrastructure — delivered
+                        as infrastructure-as-code on Azure.
+                    </p>
+                    <p>
+                        Added historization to source systems that had none, turning
+                        point-in-time project data into a queryable time series and making
+                        schedule-slippage analysis possible for the first time.
+                    </p>
+                    <ul class="tags"><li>dbt</li><li>Prefect</li><li>Azure · Bicep</li><li>SQL</li></ul>
+                </article>
+                <article class="card">
+                    <h3>Lead-generation engine</h3>
+                    <p>
+                        Public parcel and assessment records → filtered building spine →
+                        firmographic matching → multi-gate qualification → buying-committee
+                        enrichment → ranked, contact-ready target list with per-row
+                        rationale. Every candidate passes adversarial verification before a
+                        human picks up a phone.
+                    </p>
+                    <p>
+                        Refactored from a script pile into a config-driven engine: entering
+                        a new market is a profile file plus reference data, no code change.
+                    </p>
+                    <ul class="tags"><li>Public-records pipelines</li><li>Adversarial verification</li><li>Config-driven design</li></ul>
+                </article>
+                <article class="card">
+                    <h3>Knowledge platform &amp; MCP server</h3>
+                    <p>
+                        A retrieval-backed knowledge base with per-user access isolation
+                        plus a shared organizational tier — delivered into staff members'
+                        existing AI assistants rather than a new app they'd have to
+                        remember to open.
+                    </p>
+                    <p>
+                        Grounding and identifier guards took fabrications from 4 to 0 on a
+                        fixed evaluation. A shared MCP server exposes internal data and
+                        tooling as typed tools, with local and hosted OAuth entrypoints.
+                    </p>
+                    <ul class="tags"><li>RAG</li><li>MCP</li><li>Access control</li></ul>
+                </article>
+            </div>
         </section>
-        <section>
-            <h2>Google Gstore Revenue Prediction (Kaggle Competition)</h2>
-            <p>I worked with a team to generate revenue predictions for the Google Gstore. In addition to the modeling, this project highlights my technical writing.</p>
-            <ul>
-                <li><a href="https://jackjosephwright.github.io/google_gstore_site/" target="_blank">Read the Gstore paper</a></li>
-            </ul>
+
+        <section id="projects" class="section">
+            <h2><span class="section-num">03</span> Research &amp; projects</h2>
+            <div class="card-grid">
+                <article class="card card-featured">
+                    <h3>Autonomous MTG Arena agent</h3>
+                    <p>
+                        An ongoing harness for LLM-driven play of Magic: The Gathering
+                        Arena — widely cited as the most complex commercial game ever made.
+                        A vision-based perceive/decide/execute loop drives the real client
+                        across a fleet of VMs: template matching and OCR for perception,
+                        typed decision requests for the model, verified actuation for every
+                        click.
+                    </p>
+                    <p>
+                        The project doubles as a lab for agent-engineering practice:
+                        adversarial multi-agent verification, log-first diagnosis, and
+                        evaluation gates on every mechanic before it ships.
+                    </p>
+                    <ul class="tags"><li>LLM agents</li><li>Computer vision</li><li>Private repo — writeup on request</li></ul>
+                </article>
+                <article class="card">
+                    <h3>MTG analytics research</h3>
+                    <p>
+                        A body of published data research on Magic: The Gathering,
+                        including a mana-efficiency study across 4.7 million games, the
+                        16-vs-17-lands question in Limited, a Curve Score deck metric, and
+                        Mana Bug — a downloadable app that analyzes your own Arena logs.
+                    </p>
+                    <ul class="tags"><li>17Lands data</li><li>Statistical modeling</li></ul>
+                    <p class="card-links"><a href="https://jackjosephwright.github.io/mtg_main_page/" target="_blank" rel="noopener">Explore the research hub →</a></p>
+                </article>
+                <article class="card">
+                    <h3>Narrative Tree Complexity Metric</h3>
+                    <p>
+                        Collaboration with a psychology research group at the CUNY Graduate
+                        Center: expert pairwise comparisons of interactive-narrative trees,
+                        modeled with supervised and unsupervised learning into a complexity
+                        metric for new data. Co-author on the resulting paper.
+                    </p>
+                    <ul class="tags"><li>Research</li><li>ML modeling</li></ul>
+                    <p class="card-links">
+                        <a href="https://rpubs.com/JackJWright/902090" target="_blank" rel="noopener">Paper →</a>
+                        <a href="https://vimeo.com/manage/videos/706364815/0112a4ac2b" target="_blank" rel="noopener">Presentation →</a>
+                    </p>
+                </article>
+                <article class="card">
+                    <h3>Claude Code setup</h3>
+                    <p>
+                        My personal agentic-coding environment, in public: engineering
+                        principles, memory-system discipline, and the conventions I've
+                        converged on after daily use of LLM coding agents.
+                    </p>
+                    <ul class="tags"><li>Agent workflows</li><li>Open source</li></ul>
+                    <p class="card-links"><a href="https://github.com/JackJosephWright/claude-code-setup" target="_blank" rel="noopener">View the repo →</a></p>
+                </article>
+            </div>
+            <details class="earlier">
+                <summary>Earlier work</summary>
+                <ul>
+                    <li><a href="https://jwrightzz123.shinyapps.io/regression_decision_tree/" target="_blank" rel="noopener">Linear regression tool</a> — a Shiny app that walks users through building and analyzing multiple and logistic regression on their own data.</li>
+                    <li><a href="https://jackjosephwright.github.io/qb_markov.github.io/" target="_blank" rel="noopener">NFL quarterback performance</a> — Markov-chain simulation of career expected points added.</li>
+                    <li><a href="https://jackjosephwright.github.io/google_gstore_site/" target="_blank" rel="noopener">Google Gstore revenue prediction</a> — Kaggle team project with an emphasis on technical writing.</li>
+                    <li><a href="https://colab.research.google.com/drive/1neNd_mLNR8YD1fWQYkFfFXHmzvEbHQxm?usp=sharing" target="_blank" rel="noopener">Audio downsampling</a> — signal-engineering fix for a phasing issue in a Hammond B-3 virtual instrument.</li>
+                </ul>
+            </details>
         </section>
-        <section>
-            <h2>Downsampling Audio (Electrical and Signal Engineering)</h2>
-            <p>I am working with a friend to create a virtual instrument from thousands of audio recordings he collected from his Hammond B-3 organ. This is a report on a method I came up with to standardize the number of samples per second of the audio clips in order to remove a phasing issue we were having when the sounds were played together. This highlights my background and experience in electrical engineering and signal analysis.</p>
-            <ul>
-                <li><a href="https://colab.research.google.com/drive/1neNd_mLNR8YD1fWQYkFfFXHmzvEbHQxm?usp=sharing" target="_blank">Read the report</a></li>
-            </ul>
+
+        <section id="how" class="section">
+            <h2><span class="section-num">04</span> How I work</h2>
+            <div class="principles">
+                <div class="principle">
+                    <h3>End-to-end, alone if needed</h3>
+                    <p>Substrate, model layer, interface, and the stakeholder conversation that gets it adopted.</p>
+                </div>
+                <div class="principle">
+                    <h3>Evaluation by default</h3>
+                    <p>Graded answer keys, regression runs, negative controls — quality claims are numbers, not adjectives.</p>
+                </div>
+                <div class="principle">
+                    <h3>Meet people in their tools</h3>
+                    <p>Deliver into what the user already has rather than asking them to adopt something new.</p>
+                </div>
+            </div>
         </section>
-        <section>
-            <h2>Technology</h2>
-            <ul>
-                <li>Python</li>
-                <li>R</li>
-                <li>Git</li>
-                <li>Database Management: Azure</li>
-                <li>Web scraping</li>
-                <li>ML software (scikit-learn, tidymodels, etc.)</li>
-                <li>Web development</li>
-                <li>SQL</li>
-            </ul>
+
+        <section id="skills" class="section">
+            <h2><span class="section-num">05</span> Skills</h2>
+            <div class="skill-groups">
+                <div class="skill-group">
+                    <h3>AI / agent engineering</h3>
+                    <ul class="tags"><li>Applied LLMs</li><li>Agent architecture</li><li>Multi-agent verification</li><li>RAG &amp; retrieval</li><li>Evaluation &amp; calibration</li><li>MCP</li><li>Structured output</li></ul>
+                </div>
+                <div class="skill-group">
+                    <h3>Data platform</h3>
+                    <ul class="tags"><li>Python</li><li>SQL</li><li>dbt</li><li>Data modeling</li><li>Prefect</li><li>Azure</li><li>Infrastructure as code</li></ul>
+                </div>
+                <div class="skill-group">
+                    <h3>Document intelligence</h3>
+                    <ul class="tags"><li>Obligation extraction</li><li>Reconciliation logic</li><li>PDF / OCR forensics</li><li>Deterministic doc generation</li></ul>
+                </div>
+                <div class="skill-group">
+                    <h3>Foundations</h3>
+                    <ul class="tags"><li>Statistical inference</li><li>Supervised &amp; unsupervised learning</li><li>R</li><li>Requirements elicitation</li><li>Technical writing</li></ul>
+                </div>
+            </div>
         </section>
-        <section>
-            <h2>Mathematics/ML</h2>
-            <ul>
-                <li>Statistical inference, specifically for exploratory data analysis</li>
-                <li>Calculus</li>
-                <li>Linear algebra</li>
-                <li>Supervised and unsupervised learning algorithms</li>
-            </ul>
     </main>
-    <footer>
-        <p>&copy; 2024 Jack Wright</p>
+
+    <footer class="site-footer">
+        <p>© 2026 Jack Wright ·
+            <a href="https://github.com/JackJosephWright" target="_blank" rel="noopener">GitHub</a> ·
+            <a href="https://www.linkedin.com/in/jack-wright-97b9b61b7/" target="_blank" rel="noopener">LinkedIn</a>
+        </p>
     </footer>
 </body>
 </html>
