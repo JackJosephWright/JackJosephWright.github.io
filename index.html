@@ -114,8 +114,9 @@
                 <article class="card card-featured">
                     <h3>Autonomous MTG Arena agent</h3>
                     <ul>
-                        <li>Harness for LLM-driven play of Magic: The Gathering Arena against the real game client. MTG is provably Turing-complete; press coverage calls it the most complex commercial game measured.</li>
-                        <li>Loop: perceive (template matching + OCR on frames) → decide (typed DecisionRequest to the model) → execute (verified clicks). Deterministic actuation; model only makes game decisions.</li>
+                        <li>Harness for LLM-driven play of Magic: The Gathering Arena against the real game client. Optimal play in Magic is provably at least as hard as the Halting Problem; the client computes the legal menu, which is what makes the problem tractable at all.</li>
+                        <li><strong>Live result:</strong> a naive Haiku pilot with no game-specific tuning played 55 games against Arena's built-in AI and finished 27–28, a 49.1% win rate, at ~$0.03 per game — while the actuation layer still had known defects.</li>
+                        <li>Loop: perceive (game log as truth, vision only for screen position) → decide (typed request to the model) → execute (verified clicks). Every reported success is provisional until the engine confirms it.</li>
                         <li>Runs on a fleet of VMware VMs with a health sensor that classifies nodes CRASH / WEDGE / ANOMALY / CRAWL / HEALTHY.</li>
                         <li>Engineering practice: log-first diagnosis over vision, per-mechanic eval gates, adversarial multi-agent code review.</li>
                     </ul>

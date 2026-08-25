@@ -21,7 +21,7 @@
         <h1>Autonomous agent for Magic: The Gathering Arena</h1>
 
         <dl class="spec">
-            <dt>Status</dt><dd>In development. Mechanics-discovery phase; agent layer deliberately not yet wired.</dd>
+            <dt>Status</dt><dd>Live. LLM pilot seated and playing; first baseline arm closed at 49.1% over 55 games against the client's built-in AI.</dd>
             <dt>Role</dt><dd>Sole engineer</dd>
             <dt>Stack</dt><dd>Python, OpenCV, SciPy, pyautogui / pydirectinput, LLM pilot, VMware fleet</dd>
             <dt>Surface</dt><dd>~34,000 lines across 136 modules. 20 registered tools, 1,153 test functions, 10 captured replay fixtures.</dd>
@@ -244,9 +244,11 @@
 
         <h2>The discovery loop</h2>
         <p>
-            The system currently runs in shell mode: tools take the first legal option so
-            that games advance, with no pilot attached. This is not a limitation being
-            worked around, it is the point. Shell mode is a sensor.
+            The fleet runs two policies at once. Pilot nodes play with the language model
+            in the decision seat. A separate lab node runs a policy that takes the
+            <em>least-sampled</em> legal option at every choice point — deliberately bad
+            play, used as a sensor. Discovery and evaluation proceed in parallel rather
+            than in sequence.
         </p>
         <ol>
             <li>Play a game with a default policy.</li>
@@ -414,9 +416,17 @@
             twenty completed games against the tutorial AI and twenty against human
             opponents, three distinct archetypes in each lane, zero crashes, and every
             prompt type the client emitted handled by some registered tool — with the
-            unhandled-samples directory empty at the end of the run. Pilot work does not
-            begin until that passes. The reasoning is that a pilot debugging its own
-            actuators learns nothing about play.
+            unhandled-samples directory empty at the end of the run.
+        </p>
+        <p>
+            That gate was written to hold pilot work back until the mechanics were solid,
+            on the reasoning that a pilot debugging its own actuators learns nothing about
+            play. In practice the two ran concurrently — the first pilot arm was played
+            through live actuation defects, several of which were found <em>because</em>
+            the pilot was making decisions the default policy never made. The gate's
+            intent survived even where its sequencing did not: the arm's results carry an
+            explicit note that the record understates the pilot, because it played through
+            known suit faults.
         </p>
 
         <h2>The critic</h2>
@@ -472,7 +482,7 @@
 
         <h2>Limitations</h2>
         <ul>
-            <li>Mechanics-discovery phase. The pilot is not wired in; tools take first-legal defaults by design until the gate passes.</li>
+            <li>Not every decision is seated yet. Target selection, which card to pay a cost with, ordering beyond a single binned card, and stack ordering still fall to tool defaults — and a default that picks badly is invisible to every instrument except the critic.</li>
             <li>Interface coverage is incomplete by construction — the discovery loop exists precisely because the catalog is not finished.</li>
             <li>Validation currently proves that prompts clear, not that choices are good. Closing that gap is what the critic is for, and it is not yet closed.</li>
             <li>Client updates invalidate templates and calibrated coordinates together; each update costs a re-capture cycle.</li>
