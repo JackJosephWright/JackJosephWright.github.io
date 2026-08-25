@@ -34,10 +34,9 @@
             <p class="hero-kicker">AI / Automation Engineer</p>
             <h1>Jack Wright</h1>
             <p class="hero-sub">
-                Data platforms · applied LLM systems · document intelligence · autonomous
-                agents. Currently at a commercial solar EPC. MS in Data Science.
-                Everything below shipped to production users; quality claims are measured,
-                not estimated.
+                I build applied LLM systems and the data platforms under them — and then
+                get people to actually use them. MS in Data Science. Everything below
+                shipped to real users; quality claims are measured, not estimated.
             </p>
             <div class="hero-actions">
                 <a class="btn btn-primary" href="#work">Shipped systems</a>
@@ -89,11 +88,23 @@
                         <li>Core requirement: quote accuracy at scale. Every passage a plan cites is extracted verbatim from the purchased book text, not recalled by the model.</li>
                         <li>Extraction is a five-strategy parser cascade with guards against the silent failure — a parse that succeeds and is wrong. Chapters carry source offsets, so every quotation is traceable to a position in the book.</li>
                         <li>In deployment. 900 lessons — 9 grade levels × 4 units × 25 lessons — are the current school year's K–8 reading curriculum, not a pilot corpus. All 900 human-reviewed and passed before entering classrooms.</li>
+                        <li>Book-specific plans are normally licensed from a publisher or commissioned from a curriculum consultant, which is why only well-resourced schools have them. This produced a year of them for a few hundred dollars of compute, and reruns for next year's books at the same cost.</li>
                         <li>Conditioned on grade level, not just grade band, so lessons are at-level: two grades inside one band reading the same text get different vocabulary load, scaffolding, and practice expectations.</li>
                         <li>Teacher adversarial review is the correction signal: reviewers attack each plan, and captured corrections improve the next generation run.</li>
                         <li>Per-mode model selection + prompt caching: ~$0.05 per generated plan; full-school usage projected at tens of dollars per month.</li>
                     </ul>
                     <ul class="tags"><li>LLM generation</li><li>Text extraction</li><li>Quote grounding</li><li>Human feedback loop</li></ul>
+                </article>
+                <article class="card">
+                    <h3>Company-wide AI adoption</h3>
+                    <ul>
+                        <li>Administer the enterprise AI tooling the whole company uses, including access, governance, and spend monitoring.</li>
+                        <li>Internal knowledge base wired into those tools, so retrieval happens where people already work rather than in a separate app.</li>
+                        <li>Package domain expertise as installable skills and distribute them to non-technical teams — finance, preconstruction, marketing.</li>
+                        <li>Train staff directly. Ran the platform evaluation and wrote the decision brief leadership used to pick a direction, and the acceptable-use groundwork alongside legal.</li>
+                        <li>Adoption is the measure, not deployment: the contract engine is in active use by the reviewer it was built for.</li>
+                    </ul>
+                    <ul class="tags"><li>Enablement</li><li>Governance</li><li>Cost monitoring</li><li>Training</li></ul>
                 </article>
                 <article class="card">
                     <h3>Knowledge platform + MCP server</h3>
@@ -224,7 +235,7 @@
             <ul class="writing-list">
                 <li>
                     <a href="writing/lesson-plan-generator.html">Generating a school year's reading curriculum</a>
-                    <p>900 lesson plans across nine grade levels, every quotation verbatim from the real book, every lesson attacked by a teacher before it reached a classroom.</p>
+                    <p>Book-specific lesson plans are a premium product most schools can't afford. This made a year of them — 900 across nine grade levels, every quotation verbatim from the real book, every lesson attacked by a teacher first — and it reruns next year for the same cost.</p>
                 </li>
                 <li>
                     <a href="writing/contract-reconciliation-engine.html">Reading 500 obligations out of a contract</a>

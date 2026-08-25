@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Generating a school year's reading curriculum — Jack Wright</title>
-    <meta name="description" content="900 lesson plans across K-8, every quotation verbatim from the real book, every lesson reviewed by a teacher before it reached a classroom.">
+    <meta name="description" content="A year of book-specific lesson plans across K-8 — normally a premium product only well-resourced schools can afford — for a few hundred dollars of compute, and repeatable.">
     <meta property="og:title" content="Generating a school year's reading curriculum">
     <meta property="og:description" content="900 lesson plans across K-8, every quotation verbatim from the real book.">
     <meta property="og:type" content="article">
@@ -23,9 +23,26 @@
         <dl class="spec">
             <dt>Status</dt><dd>In deployment. This is the live curriculum, not a pilot corpus.</dd>
             <dt>Scale</dt><dd>900 lessons — 9 grade levels × 4 units × 25 lessons. All 900 reviewed and passed by a teacher.</dd>
-            <dt>Cost</dt><dd>~$0.05 per plan; full-school usage in the tens of dollars per month</dd>
+            <dt>Cost</dt><dd>~$0.05 per plan. A year of curriculum for roughly the price of a few textbooks.</dd>
             <dt>Role</dt><dd>Sole engineer</dd>
         </dl>
+
+        <h2>What this replaces</h2>
+        <p>
+            Lesson plans written for a specific book — not generic skills worksheets, but
+            plans built around the actual text a class is reading — are a premium product.
+            Schools either license them from a publisher or commission a curriculum
+            consultant to write them, and both are expensive enough that only
+            well-resourced schools end up with them. Everyone else teaches from whatever is
+            free and approximately relevant.
+        </p>
+        <p>
+            This produced a full year of them, across nine grade levels, for a few hundred
+            dollars of compute. And it is not a one-time effort — next year's book list runs
+            through the same pipeline at the same cost. That is the part that matters more
+            than the 900: the expensive thing was never one year of plans, it was needing a
+            specialist every time the books changed.
+        </p>
 
         <h2>The constraint that shapes everything</h2>
         <p>
