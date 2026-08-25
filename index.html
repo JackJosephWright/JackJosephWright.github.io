@@ -51,14 +51,15 @@
             <p class="section-note">Internal production systems. Described at the capability level; no client or employer internals.</p>
             <div class="card-grid">
                 <article class="card">
-                    <h3>Contract-review engine</h3>
+                    <h3>Contract tooling for legal review</h3>
                     <ul>
-                        <li>Input: long-form agreement. Output: 500+ discrete obligations in a typed schema, reconciled against a standard template.</li>
-                        <li>Produces a coverage matrix; each gap routed to the responsible reader.</li>
-                        <li>Calibration on a hand-graded set with negative controls: 92% gap recall, 0% false positives.</li>
-                        <li>~150 tested decision functions handle reconciliation rules (flooring, window nesting, asymmetric verdicts). LLM scope limited to semantic matching, so legal can audit the logic.</li>
+                        <li>Not one system — a set of tools built around how the reviewer actually works, each with a different delivery vehicle.</li>
+                        <li><strong>Obligation reconciliation.</strong> Long-form agreement in; 500+ discrete obligations out, checked against the standard template into a coverage matrix with each gap routed to whoever owns it. 92% gap recall at 0% false positives on a hand-graded set with negative controls. ~150 tested rule functions keep the reasoning auditable; the model only does semantic matching.</li>
+                        <li><strong>Subcontract template builder.</strong> Generates the subcontract off the governing prime contract, adjusted into house language and standing preferences.</li>
+                        <li><strong>Prime contract first-pass review.</strong> In progress.</li>
+                        <li><strong>A shared workspace, not an app.</strong> For one engagement the right answer was a configured Claude project the lawyer works inside directly, alongside the model. Shipping software would have been slower and worse.</li>
                     </ul>
-                    <ul class="tags"><li>Python</li><li>LLM extraction</li><li>Calibration</li><li>pytest</li></ul>
+                    <ul class="tags"><li>Python</li><li>Document intelligence</li><li>Calibration</li><li>Legal workflow</li></ul>
                 </article>
                 <article class="card">
                     <h3>Analytics warehouse</h3>
@@ -77,6 +78,7 @@
                         <li>Pipeline: building-spine filter → address-level firmographic matching → multi-gate qualification → buying-committee enrichment.</li>
                         <li>Delivered ~160 verified targets against a 150–200 ask. Adversarial verification removed ~40% of candidates as wrong or unverifiable before anyone made a call.</li>
                         <li>Config-driven: a new market is a profile file plus reference data, zero code change. 71 tests. Output ships as a living tracker that upserts on re-run and never overwrites human-entered columns.</li>
+                        <li>In use — the leads are in the sales system, not in a spreadsheet somebody was emailed once.</li>
                     </ul>
                     <ul class="tags"><li>Public records</li><li>Entity matching</li><li>Adversarial verification</li></ul>
                 </article>
