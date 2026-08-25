@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Errors hiding in a 5.1M-game dataset — Jack Wright</title>
+    <meta name="description" content="A card that isn't a card, 23 cards that were never cast but kept showing up on the battlefield, and a join proved correct by arithmetic.">
+    <meta property="og:title" content="Errors hiding in a 5.1M-game dataset">
+    <meta property="og:description" content="A card that isn't a card, 23 cards that were never cast but kept appearing on the battlefield.">
+    <meta property="og:type" content="article">
+    <meta name="twitter:card" content="summary">
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='18' fill='%23b4560e'/%3E%3Ctext x='50' y='68' font-size='52' font-family='Georgia,serif' font-weight='bold' fill='white' text-anchor='middle'%3EJW%3C/text%3E%3C/svg%3E">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../styles.css">
+</head>
+<body>
+    <article class="post">
+        <p class="post-back"><a href="../index.html#writing">← Writing</a></p>
+        <h1>Errors hiding in a 5.1M-game dataset</h1>
+
+        <dl class="spec">
+            <dt>Data</dt><dd>Public 17lands replay exports. 7 sets, 5.1M games, 31.4M card episodes.</dd>
+            <dt>Output</dt><dd>A dataset contract: every trap recorded with the measurement that proves it</dd>
+        </dl>
+
+        <h2>None of these raise an error</h2>
+        <p>
+            The dataset is generous and well documented. It is also full of encodings that
+            look like one thing and mean another. Every item below quietly produced a wrong
+            number before it was caught, and three of them reached a published table.
+        </p>
+
+        <h2>A card that isn't a card</h2>
+        <p>
+            Real card identifiers start at 6873. Below that are engine sentinels, and one of
+            them means "hidden or unknown card." It shipped in my table as though it were a
+            card: 14,884 games, a 73% win rate against a 55% baseline. An 18-point outlier
+            that was not a card at all.
+        </p>
+        <p>
+            The second-order damage was worse than the bad row. Card win rates get shrunk
+            toward a prior estimated from the other cards, so the fake card was also
+            distorting the estimates of every real card around it.
+        </p>
+
+        <h2>23 cards that were never cast and kept appearing anyway</h2>
+        <p>
+            Split cards — one card, two halves — record the <em>half</em> that was cast in
+            the cast columns, and the <em>whole card</em> everywhere else. Different
+            identifiers. They never join.
+        </p>
+        <p>
+            The visible symptom: all 23 Rooms in one set showed 393,800 sightings on the
+            battlefield and exactly zero casts. Nobody ever cast them; they simply appeared.
+            That accounted for 7% of the set's entire cast volume, and fixing the join
+            recovered 904,368 games' worth of casts.
+        </p>
+
+        <h2>Zones describe what something is now, not what it was printed as</h2>
+        <p>
+            A face-down creature logs its true identity in the creature column. So about 4%
+            of "your creatures" are printed lands and 1.4% are printed instants and
+            sorceries. A sorcery being "on the battlefield" means it was face-down as a 2/2,
+            not that its effect was somehow in play.
+        </p>
+        <p>
+            Which also means the land and creature columns overlap — in one set, 335 of 481
+            land identifiers also appear as creatures. Any code that treats zones as
+            disjoint quietly loses about 1% of everything.
+        </p>
+
+        <h2>Negative damage is correct</h2>
+        <p>
+            The combat damage column sometimes goes negative, as low as −78. It is not
+            corrupt. It's a signed net life change from combat, so negative means that
+            player gained life — lifelink. Clamping it to zero, which is the reflex, deletes
+            the signal entirely.
+        </p>
+
+        <h2>One card is many identifiers</h2>
+        <p>
+            Identifiers are per art printing, so a single card splits into several rows with
+            separate sample sizes. A basic land managed to appear at both the top and the
+            bottom of the same ranking. Folding by card name raised the share of
+            between-card variation that is real signal from 33% to 51%.
+        </p>
+
+        <h2>Proving a join is right with arithmetic instead of inspection</h2>
+        <p>
+            A newer dataset pairs each expert player's turn with the board state immediately
+            before it, across 10.8M turns. Picking the right preceding snapshot depends on
+            who went first, and getting it wrong is silent — the rows still look reasonable,
+            except the "before" state now contains that turn's own actions.
+        </p>
+        <p>
+            The check doesn't require reading any rows. When your turn <em>T</em> starts you
+            have taken exactly <em>T−1</em> turns, so you cannot have more than <em>T−1</em>
+            lands. The correct join predicts exactly 1 land at turn two; the two wrong ones
+            predict 0 and 2. Measured across 800,000 turns, both cases read exactly 1.00, at
+            100% agreement.
+        </p>
+        <p>
+            A second check came free. In later turns the rule loosens as players miss land
+            drops, and it loosens <em>more</em> for the player who went first — which is what
+            card advantage predicts, since the player on the draw has seen an extra card. A
+            swapped join reverses the sign of that gap.
+        </p>
+
+        <h2>A finding that killed what it was built for</h2>
+        <p>
+            That expert dataset was meant to produce a benchmark: situations where strong
+            players overwhelmingly agree, used as a regression test. Measuring the agreement
+            distribution first showed why it wasn't worth having.
+        </p>
+        <p>
+            Only 11% of expert decisions land in the high-agreement band, and that band
+            contains no partial attacks at all. Attacking with everything, or not attacking,
+            is usually forced by the board. Choosing <em>which three of five</em> creatures
+            attack is the actual judgment, and it never concentrates. Filtering for consensus
+            collects exactly the decisions that were never in doubt. The benchmark was
+            deleted and the measurement kept as the reason.
+        </p>
+
+        <p>
+            The modelling built on this data is <a href="win-prob.html">written up
+            separately</a>.
+        </p>
+
+        <p class="post-back post-back-end"><a href="../index.html#writing">← Writing</a></p>
+    </article>
+</body>
+</html>

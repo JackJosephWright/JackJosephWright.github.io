@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>How do you put a number on a Magic position? — Jack Wright</title>
+    <meta name="description" content="What a card is worth, why every measurement of it is contaminated, and which parts of Magic cannot be scored from a board state at all.">
+    <meta property="og:title" content="How do you put a number on a Magic position?">
+    <meta property="og:description" content="What a card is worth, why every measurement is contaminated, and what cannot be scored from a board state at all.">
+    <meta property="og:type" content="article">
+    <meta name="twitter:card" content="summary">
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='18' fill='%23b4560e'/%3E%3Ctext x='50' y='68' font-size='52' font-family='Georgia,serif' font-weight='bold' fill='white' text-anchor='middle'%3EJW%3C/text%3E%3C/svg%3E">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../styles.css">
+</head>
+<body>
+    <article class="post">
+        <p class="post-back"><a href="../index.html#writing">← Writing</a></p>
+        <h1>How do you put a number on a Magic position?</h1>
+
+        <dl class="spec">
+            <dt>Evidence</dt><dd>7 sets, 5,109,204 games, 31.4M card episodes</dd>
+            <dt>Purpose</dt><dd>Give an agent a way to tell whether a play improved its position</dd>
+        </dl>
+
+        <h2>The question</h2>
+        <p>
+            An agent that plays Magic needs to know whether what it just did helped. That
+            means a number over board states. The moment you try to define that number
+            honestly, the game stops cooperating.
+        </p>
+
+        <h2>You cannot read a card's value off the card</h2>
+        <p>
+            The convenient answer would be that a card's worth is a function of its printed
+            attributes — rarity, mana cost, type. Then you could score any card ever
+            printed, including ones released tomorrow.
+        </p>
+        <p>
+            Differences between cards are 98.8% real signal rather than noise. Rarity, cost
+            and type explain <strong>3%</strong> of it. Guessing that every card is exactly
+            average beats using them. Two Final Fantasy rares, both three mana, both
+            colourless, identical on every attribute printed on the card, win at 41.4% and
+            63.6%.
+        </p>
+        <p>
+            So card value has to be measured from outcomes rather than derived. Which
+            immediately creates a worse problem.
+        </p>
+
+        <h2>Every measurement is contaminated by the deck</h2>
+        <p>
+            Measure a card's win rate and you are also measuring the decks it tends to
+            appear in. Good cards live in good decks. The effect is large and almost
+            perfectly uniform: <em>every</em> card gains roughly 9.5 points of win rate when
+            the cards around it are strong. Rarity's own signal is so swamped by this that
+            rarities come out in the wrong order — mythics beat commons beat rares beat
+            uncommons.
+        </p>
+        <p>
+            The usual response is to try to remove the confound. The better response is to
+            notice that the agent never asks the contaminated question. It never wants to
+            know whether a card is good in the abstract. It wants to know which of the four
+            cards <em>in this hand, right now</em> to play — and all four share a deck, a
+            draw, and a game. The deck effect is a common term across every option being
+            compared, so it cancels.
+        </p>
+        <p>
+            That resolves the problem but constrains the answer: these numbers are usable
+            ordinally, within one hand at one moment, and never as absolute magnitudes
+            compared across decks.
+        </p>
+
+        <h2>What you condition on is what you would teach</h2>
+        <p>
+            You still have to decide what event a card's value is measured against, and
+            this turns out to be a choice about behaviour rather than a technical detail.
+        </p>
+        <table>
+            <tr><th>Measured when the card is…</th><th>What it actually captures</th></tr>
+            <tr><td>In your hand</td><td>Rises steadily with turn number. Holding cards late correlates with winning — because the game went long, which usually means you were ahead.</td></tr>
+            <tr><td>On the battlefield</td><td>Survivorship. You only observe the card in games where it lived long enough to be seen, so it is credited for the winning positions that let it survive.</td></tr>
+            <tr><td>Cast</td><td>The act of playing it. Conditions on having done something, so both confounds drop out.</td></tr>
+        </table>
+        <p>
+            An agent optimising against the first measurement learns to hoard its hand and
+            feel good about surviving to turn twelve. The measurement does not merely
+            describe behaviour; it selects it. Picking the conditioning event is the closest
+            thing here to writing down what you want the agent to want.
+        </p>
+
+        <h2>Some of the game cannot be scored from a position at all</h2>
+        <p>
+            The most useful result was a hard limit. Grading a value function on whether it
+            recovers the real worth of a known-good play:
+        </p>
+        <table>
+            <tr><th>Play</th><th>Simple model</th><th>With 16 more features</th></tr>
+            <tr><td>Removal spell</td><td>29%</td><td>120%</td></tr>
+            <tr><td>Attack</td><td>~31%</td><td>~31%</td></tr>
+        </table>
+        <p>
+            Sixteen carefully chosen additions moved attacking by nothing at all, while
+            removal went from barely credited to fully credited.
+        </p>
+        <p>
+            The asymmetry is not a modelling failure. A removal spell's entire value is
+            written into the board you can see immediately afterwards — a creature is gone.
+            An attack's value mostly is not. It sits in damage that matters three turns from
+            now, in the blocks the opponent must now consider, in a race that has not
+            resolved. Magic divides into effects that a snapshot can price and effects that
+            only a sequence can price, and no amount of additional snapshot detail moves an
+            effect from the second group to the first.
+        </p>
+        <p>
+            One coefficient makes the same point in miniature. All else equal, a board is
+            worth measurably less at the end of <em>your</em> turn than at the end of your
+            opponent's — you are tapped out and it is about to be their move. Obvious once
+            said, and invisible to every earlier model here, because none of them recorded
+            whose turn the snapshot came from.
+        </p>
+
+        <h2>Where that leaves the division of labour</h2>
+        <p>
+            The measurement owns statics: what a frozen position is worth. The language
+            model owns dynamics — rules, sequencing, what happens over the next three turns
+            — because that is the part it reads natively and the part the numbers
+            structurally cannot reach. And a value is consumed as a <em>difference</em>
+            between two positions at a decision point, never as a level, because the levels
+            are calibrated against a population the agent does not stand in.
+        </p>
+        <p>
+            Which is also why the number is deliberately not shown to the agent by default.
+            Hand a language model a score and ask it to act on the score, and it becomes an
+            executor for the statistics — at which point the statistics may as well play
+            alone. It is available as an experiment, switched off, so that if it ever gets
+            switched on the effect can be measured rather than assumed.
+        </p>
+
+        <p>
+            Related: <a href="dataset-validation.html">the data-quality work underneath
+            this</a>, and <a href="brain.html">the agent it was built for</a>.
+        </p>
+
+        <p class="post-back post-back-end"><a href="../index.html#writing">← Writing</a></p>
+    </article>
+</body>
+</html>

@@ -3,100 +3,303 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Data Science Projects</title>
+    <title>Jack Wright — AI / Automation Engineer</title>
+    <meta name="description" content="Jack Wright. AI/automation engineer. Data platforms (dbt, Prefect, Azure), applied LLM systems, document intelligence, autonomous agents. Shipped systems with measured results.">
+    <meta property="og:title" content="Jack Wright — AI / Automation Engineer">
+    <meta property="og:description" content="Data platforms, applied LLM systems, document intelligence, autonomous agents. Shipped systems with measured results.">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://jackjosephwright.github.io/">
+    <meta name="twitter:card" content="summary">
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='18' fill='%23b4560e'/%3E%3Ctext x='50' y='68' font-size='52' font-family='Georgia,serif' font-weight='bold' fill='white' text-anchor='middle'%3EJW%3C/text%3E%3C/svg%3E">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="styles.css">
-    <!-- Adding Google Fonts for better typography -->
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
 </head>
 <body>
-    <header>
-        <h1>Data Science Projects</h1>
-        <p>Data Science and Engineering Projects</p>
-        <a href="https://www.linkedin.com/in/jack-wright-97b9b61b7/" target="_blank" style="color: #fff; text-decoration: none; font-weight: bold;">
-            Connect with me on LinkedIn
-        </a>
-    </header>
-    <main>
-        <section id="intro">
-            <h2>Welcome</h2>
-            <p>Welcome to my portfolio! I'm Jack Wright, a dedicated data scientist with a diverse background in data analysis, statistical modeling, and machine learning. With a Master’s degree in Data Science and extensive experience across multiple domains—including research, database management, and data engineering—I specialize in transforming complex data into actionable insights.</p>
-            <p>From building advanced data pipelines and automated scrapers to developing machine learning models and conducting statistical analysis, my work spans various fields including financial engineering, community development, and academic research. I have a proven track record of leveraging data to drive impactful decisions, improve processes, and support organizational goals.</p>
-            <p>Explore my portfolio to see how I can help you harness the power of data to achieve your objectives.</p>
-        </section>
-        </section>
-        <section>
-            <h2>Narrative Tree Complexity Metric</h2>
-            <p>I worked with a Psychology research group at the CUNY Grad Center to create a Complexity Metric for research on Interactive Digital Narrative. I used experts in the field to compare pairs of narrative trees, which were then used to create a hierarchy of tree complexities. This expert opinion was then modeled using supervised and unsupervised learning to create a model to assign a Narrative Tree Complexity Metric to new data. I will be a co-author on this paper and continue to work with the group on narrative tree research moving forward.</p>
-            <ul>
-                <li><a href="https://rpubs.com/JackJWright/902090" target="_blank">Read the paper</a></li>
-                <li><a href="https://vimeo.com/manage/videos/706364815/0112a4ac2b" target="_blank">Watch the presentation</a></li>
-                <li><a href="https://ctree-postgres.herokuapp.com/" target="_blank">Visit the data collection website</a></li>
-            </ul>
-        </section>
-        <section>
-            <h2>Linear Regression Tool</h2>
-            <p>I created a shiny app that allows users to upload their own data set and visually walk through the steps of creating and analyzing multiple and logistic regression.</p>
-            <ul>
-                <li><a href="https://jwrightzz123.shinyapps.io/regression_decision_tree/" target="_blank">Visit the linear regression tool</a></li>
-            </ul>
-        </section>
-        <section>
-            <h2>Magic: The Gathering Projects</h2>
-            <p>
-                As a lifelong fan of Moneyball and sports metrics, I saw an exciting opportunity to apply data analysis to Magic: The Gathering, a game recognized for its immense complexity and strategic depth. My investigations into this field are driven by a passion for uncovering insights from vast datasets and exploring areas that remain under-analyzed. According to a Technology Review article, Magic: The Gathering is hailed as the world's most complex game, making it a fascinating subject for data-driven exploration.
+    <header class="site-header">
+        <nav class="nav">
+            <span class="nav-name">Jack Wright</span>
+            <div class="nav-links">
+                <a href="#work">Work</a>
+                <a href="#projects">Projects</a>
+                <a href="#publications">Publications</a>
+                <a href="#writing">Writing</a>
+                <a href="#skills">Skills</a>
+                <a href="https://github.com/JackJosephWright" target="_blank" rel="noopener">GitHub</a>
+                <a href="https://www.linkedin.com/in/jack-wright-97b9b61b7/" target="_blank" rel="noopener">LinkedIn</a>
+            </div>
+        </nav>
+        <div class="hero">
+            <p class="hero-kicker">AI / Automation Engineer</p>
+            <h1>Jack Wright</h1>
+            <p class="hero-sub">
+                I build applied LLM systems and the data platforms under them — and then
+                get people to actually use them. MS in Data Science. Everything below
+                shipped to real users; quality claims are measured, not estimated.
             </p>
-            <ul>
-                <li><a href="https://jackjosephwright.github.io/mtg_main_page/" target="_blank">Explore my Magic: The Gathering analysis projects here</a></li>
-            </ul>
-            
+            <div class="hero-actions">
+                <a class="btn btn-primary" href="#work">Shipped systems</a>
+                <a class="btn" href="https://www.linkedin.com/in/jack-wright-97b9b61b7/" target="_blank" rel="noopener">LinkedIn</a>
+            </div>
+        </div>
+    </header>
+
+    <main>
+        <section id="work" class="section">
+            <h2><span class="section-num">01</span> Shipped systems</h2>
+            <p class="section-note">Internal production systems. Described at the capability level; no client or employer internals.</p>
+            <div class="card-grid">
+                <article class="card">
+                    <h3>Contract tooling for legal review</h3>
+                    <ul>
+                        <li>Not one system — a set of tools built around how the reviewer actually works, each with a different delivery vehicle.</li>
+                        <li><strong>Obligation reconciliation.</strong> Long-form agreement in; 500+ discrete obligations out, checked against the standard template into a coverage matrix with each gap routed to whoever owns it. 92% gap recall at 0% false positives on a hand-graded set with negative controls. ~150 tested rule functions keep the reasoning auditable; the model only does semantic matching.</li>
+                        <li><strong>Subcontract template builder.</strong> Generates the subcontract off the governing prime contract, adjusted into house language and standing preferences.</li>
+                        <li><strong>Prime contract first-pass review.</strong> In progress.</li>
+                        <li><strong>A shared workspace, not an app.</strong> For one engagement the right answer was a configured Claude project the lawyer works inside directly, alongside the model. Shipping software would have been slower and worse.</li>
+                    </ul>
+                    <ul class="tags"><li>Python</li><li>Document intelligence</li><li>Calibration</li><li>Legal workflow</li></ul>
+                </article>
+                <article class="card">
+                    <h3>Analytics warehouse</h3>
+                    <ul>
+                        <li>Ingestion → dbt staging/marts → executive-facing views. First data substrate at the company.</li>
+                        <li>Enforced dbt model contracts: a breaking schema change fails CI, not a dashboard.</li>
+                        <li>Snapshot + milestone fact tables add history to sources that only store current state. Enables schedule-slippage analysis.</li>
+                        <li>Prefect orchestration on a managed worker. Azure infrastructure from Bicep, including decommissioning an environment that wasn't earning its cost.</li>
+                    </ul>
+                    <ul class="tags"><li>dbt</li><li>SQL</li><li>Prefect</li><li>Azure</li><li>Bicep</li></ul>
+                </article>
+                <article class="card">
+                    <h3>Lead-generation engine</h3>
+                    <ul>
+                        <li>Input: public parcel + assessment records. Output: ranked, contact-ready target list with per-row rationale.</li>
+                        <li>Pipeline: building-spine filter → address-level firmographic matching → multi-gate qualification → buying-committee enrichment.</li>
+                        <li>Delivered ~160 verified targets against a 150–200 ask. Adversarial verification removed ~40% of candidates as wrong or unverifiable before anyone made a call.</li>
+                        <li>Config-driven: a new market is a profile file plus reference data, zero code change. 71 tests. Output ships as a living tracker that upserts on re-run and never overwrites human-entered columns.</li>
+                        <li>In use — the leads are in the sales system, not in a spreadsheet somebody was emailed once.</li>
+                    </ul>
+                    <ul class="tags"><li>Public records</li><li>Entity matching</li><li>Adversarial verification</li></ul>
+                </article>
+                <article class="card">
+                    <h3>Lesson-planning AI — Brilla Public Charter Schools</h3>
+                    <ul>
+                        <li>Mode 1: unit overview + lesson number → complete, teach-ready lesson plan grounded in the network's curriculum and teaching expectations.</li>
+                        <li>Mode 2: multi-turn coaching that walks a teacher through internalizing a plan before class.</li>
+                        <li>Core requirement: quote accuracy at scale. Every passage a plan cites is extracted verbatim from the purchased book text, not recalled by the model.</li>
+                        <li>Extraction is a five-strategy parser cascade with guards against the silent failure — a parse that succeeds and is wrong. Chapters carry source offsets, so every quotation is traceable to a position in the book.</li>
+                        <li>In deployment. 900 lessons — 9 grade levels × 4 units × 25 lessons — are the current school year's K–8 reading curriculum, not a pilot corpus. All 900 human-reviewed and passed before entering classrooms.</li>
+                        <li>Book-specific plans are normally licensed from a publisher or commissioned from a curriculum consultant, which is why only well-resourced schools have them. This produced a year of them for a few hundred dollars of compute, and reruns for next year's books at the same cost.</li>
+                        <li>Conditioned on grade level, not just grade band, so lessons are at-level: two grades inside one band reading the same text get different vocabulary load, scaffolding, and practice expectations.</li>
+                        <li>Teacher adversarial review is the correction signal: reviewers attack each plan, and captured corrections improve the next generation run.</li>
+                        <li>Per-mode model selection + prompt caching: ~$0.05 per generated plan; full-school usage projected at tens of dollars per month.</li>
+                    </ul>
+                    <ul class="tags"><li>LLM generation</li><li>Text extraction</li><li>Quote grounding</li><li>Human feedback loop</li></ul>
+                </article>
+                <article class="card">
+                    <h3>Company-wide AI adoption</h3>
+                    <ul>
+                        <li>Administer the enterprise AI tooling the whole company uses, including access, governance, and spend monitoring.</li>
+                        <li>Internal knowledge base wired into those tools, so retrieval happens where people already work rather than in a separate app.</li>
+                        <li>Package domain expertise as installable skills and distribute them to non-technical teams — finance, preconstruction, marketing.</li>
+                        <li>Train staff directly. Ran the platform evaluation and wrote the decision brief leadership used to pick a direction, and the acceptable-use groundwork alongside legal.</li>
+                        <li>Adoption is the measure, not deployment: the contract engine is in active use by the reviewer it was built for.</li>
+                    </ul>
+                    <ul class="tags"><li>Enablement</li><li>Governance</li><li>Cost monitoring</li><li>Training</li></ul>
+                </article>
+                <article class="card">
+                    <h3>Knowledge platform + MCP server</h3>
+                    <ul>
+                        <li>Retrieval-backed knowledge base: per-user row-level isolation plus a shared organizational tier.</li>
+                        <li>Delivered inside staff members' existing AI assistants — no new app to open. Multiple pilot users live.</li>
+                        <li>Fabrications on a fixed eval: 4 → 0, via an explicit grounding rule and identifier guards. Quality gate fails on omissions, not just inventions.</li>
+                        <li>Shared MCP server exposes internal data and tooling as typed tools; stdio and hosted OAuth entrypoints.</li>
+                    </ul>
+                    <ul class="tags"><li>RAG</li><li>MCP</li><li>Row-level security</li></ul>
+                </article>
+            </div>
         </section>
-         
-        
-        <section>
-            <h2>Predicting NFL Quarterback Performance with Markov Chains</h2>
-            <p>I created a simulation that predicts the career performance (measured by expected points added) for a quarterback using Markov chain transitions.</p>
-            <ul>
-                <li><a href="https://jackjosephwright.github.io/qb_markov.github.io/" target="_blank">View the report</a></li>
+
+        <section id="projects" class="section">
+            <h2><span class="section-num">02</span> Research &amp; projects</h2>
+            <div class="card-grid">
+                <article class="card card-featured">
+                    <h3>Autonomous MTG Arena agent</h3>
+                    <ul>
+                        <li>Harness for LLM-driven play of Magic: The Gathering Arena. The game has no API, so the bot drives the real client through its interface; the client publishes the legal move set, so the model only ever chooses among options it is already allowed to take.</li>
+                        <li><strong>Live result:</strong> a naive Haiku pilot with no game-specific tuning played 55 games against Arena's built-in AI and finished 27–28, a 49.1% win rate, at ~$0.03 per game — while the actuation layer still had known defects.</li>
+                        <li>Loop: perceive (game log as truth, vision only for screen position) → decide (typed request to the model) → execute (verified clicks). Every reported success is provisional until the engine confirms it.</li>
+                        <li>Runs on a fleet of VMware VMs with a health sensor that classifies nodes CRASH / WEDGE / ANOMALY / CRAWL / HEALTHY.</li>
+                        <li>Engineering practice: log-first diagnosis over vision, per-mechanic eval gates, adversarial multi-agent code review.</li>
+                    </ul>
+                    <ul class="tags"><li>LLM agents</li><li>Computer vision</li><li>Python</li><li>Private repo</li></ul>
+                    <p class="card-links">
+                        <a href="writing/mtga-agent.html">Architecture →</a>
+                        <a href="writing/brain.html">The LLM pilot →</a>
+                        <a href="writing/win-prob.html">Data research →</a>
+                    </p>
+                </article>
+                <article class="card">
+                    <h3>MTG analytics research</h3>
+                    <ul>
+                        <li>Mana-efficiency study over 4.7M games of 17Lands data: correlation between mana spent and win rate.</li>
+                        <li>16 vs 17 lands in Limited; Curve Score deck metric; player-skill vs rank-distribution study.</li>
+                        <li>Mana Bug: downloadable app that computes the metrics from your own Arena log files.</li>
+                    </ul>
+                    <ul class="tags"><li>17Lands data</li><li>Statistical modeling</li></ul>
+                    <p class="card-links"><a href="https://jackjosephwright.github.io/mtg_main_page/" target="_blank" rel="noopener">Research hub →</a></p>
+                </article>
+                <article class="card">
+                    <h3>Narrative Tree Complexity Metric</h3>
+                    <ul>
+                        <li>With a psychology research group at the CUNY Graduate Center; co-author on the paper.</li>
+                        <li>Method: expert pairwise comparisons of interactive-narrative trees → complexity hierarchy → supervised + unsupervised models that score new trees.</li>
+                    </ul>
+                    <ul class="tags"><li>Research</li><li>ML modeling</li></ul>
+                    <p class="card-links">
+                        <a href="https://rpubs.com/JackJWright/902090" target="_blank" rel="noopener">Paper →</a>
+                        <a href="https://vimeo.com/706364815/0112a4ac2b" target="_blank" rel="noopener">Presentation →</a>
+                    </p>
+                </article>
+            </div>
+            <details class="earlier">
+                <summary>Earlier work</summary>
+                <ul>
+                    <li><a href="https://jwrightzz123.shinyapps.io/regression_decision_tree/" target="_blank" rel="noopener">Linear regression tool</a> — Shiny app: upload a dataset, step through multiple/logistic regression.</li>
+                    <li><a href="https://jackjosephwright.github.io/qb_markov.github.io/" target="_blank" rel="noopener">NFL quarterback performance</a> — Markov-chain simulation of career expected points added.</li>
+                    <li><a href="https://jackjosephwright.github.io/google_gstore_site/" target="_blank" rel="noopener">Google Gstore revenue prediction</a> — Kaggle team project; technical writing sample.</li>
+                    <li><a href="https://colab.research.google.com/drive/1neNd_mLNR8YD1fWQYkFfFXHmzvEbHQxm?usp=sharing" target="_blank" rel="noopener">Audio downsampling</a> — sample-rate standardization to fix phasing in a Hammond B-3 virtual instrument.</li>
+                </ul>
+            </details>
+        </section>
+
+        <section id="publications" class="section">
+            <h2><span class="section-num">03</span> Publications</h2>
+            <ul class="pubs">
+                <li>
+                    <strong>Wright, J.</strong>, Daiute, C., &amp; Murray, J. T. (in preparation).
+                    Developing and refining the IDN-LLM-Autocoder.
+                    <span class="pub-note">First author. Automates a hand-built narrative
+                    coding scheme — human annotation in ATLAS.ti was the throughput ceiling
+                    on study scale. Two independent classifiers (player reflections, IDN
+                    design elements) scored per category against a human gold standard;
+                    reliability targets Cohen's κ ≥ 0.70 / F1 ≥ 0.75, with low-recall
+                    categories fed back into taxonomy revision.</span>
+                </li>
+                <li>
+                    Daiute, C., <strong>Wright, J.</strong>, &amp; Murray, J. T. (2025).
+                    Streams of consciousness in interactive digital narrative research design.
+                    In <em>Interactive Storytelling: ICIDS 2024</em>. Springer.
+                    <a href="https://link.springer.com/chapter/10.1007/978-3-031-78453-8_1" target="_blank" rel="noopener">Springer →</a>
+                </li>
+                <li>
+                    Daiute, C., Murray, J. T., <strong>Wright, J.</strong>, &amp; Calistro, T. (2022).
+                    Intersubjective pivots in interactive digital narrative design learning.
+                    In <em>Interactive Storytelling: ICIDS 2022</em>, LNCS 13762, pp. 366–382. Springer.
+                    <a href="https://link.springer.com/chapter/10.1007/978-3-031-22298-6_22" target="_blank" rel="noopener">Springer →</a>
+                </li>
+                <li>
+                    <strong>Wright, J. J.</strong> (2022).
+                    IDN tree complexity (MS thesis). Graduate Center, City University of New York.
+                    <a href="https://rpubs.com/JackJWright/902090" target="_blank" rel="noopener">Related report →</a>
+                </li>
             </ul>
         </section>
-        <section>
-            <h2>Google Gstore Revenue Prediction (Kaggle Competition)</h2>
-            <p>I worked with a team to generate revenue predictions for the Google Gstore. In addition to the modeling, this project highlights my technical writing.</p>
-            <ul>
-                <li><a href="https://jackjosephwright.github.io/google_gstore_site/" target="_blank">Read the Gstore paper</a></li>
+
+        <section id="writing" class="section">
+            <h2><span class="section-num">04</span> Writing</h2>
+            <p class="section-note">Mostly one question: how do you know an AI system is actually working?</p>
+
+            <h3 class="writing-group">Teaching a language model to play Magic</h3>
+            <p class="writing-group-note">A personal project, and the one where the ideas get tested at full depth. Four pieces, in reading order.</p>
+            <ul class="writing-list">
+                <li>
+                    <a href="writing/mtga-agent.html">Building a bot that plays Magic: The Gathering Arena</a>
+                    <p>The game has no API, so the bot uses it the way a person does. How the game's own log made the vision layer almost disappear, and why a click that reports success usually didn't do anything.</p>
+                </li>
+                <li>
+                    <a href="writing/brain.html">An LLM refused to block 97% of the time</a>
+                    <p>A naive pilot reached 49% against Arena's own AI for three cents a game, then declined to block on 268 of 276 chances. It wasn't bad at combat — power and toughness appeared in zero of 4,201 prompts.</p>
+                </li>
+                <li>
+                    <a href="writing/win-prob.html">How do you put a number on a Magic position?</a>
+                    <p>A card's value can't be read off the card, every measurement of it is contaminated by the deck it came from, and what you condition on determines what the agent would learn to want. Some of the game can't be scored from a position at all.</p>
+                </li>
+                <li>
+                    <a href="writing/dataset-validation.html">Errors hiding in a 5.1M-game dataset</a>
+                    <p>A card that isn't a card, shipped with an 18-point win-rate outlier. 23 cards that were never once cast but kept turning up on the battlefield. And a join proved correct by arithmetic instead of inspection.</p>
+                </li>
+            </ul>
+
+            <h3 class="writing-group">Systems built at work</h3>
+            <p class="writing-group-note">Described at the capability level — no employer internals, no client names.</p>
+            <ul class="writing-list">
+                <li>
+                    <a href="writing/lesson-plan-generator.html">Generating a school year's reading curriculum</a>
+                    <p>Book-specific lesson plans are a premium product most schools can't afford. This made a year of them — 900 across nine grade levels, every quotation verbatim from the real book, every lesson attacked by a teacher first — and it reruns next year for the same cost.</p>
+                </li>
+                <li>
+                    <a href="writing/contract-reconciliation-engine.html">Reading 500 obligations out of a contract</a>
+                    <p>92% gap recall at zero false positives — and the rubric that reported a clean bill of health because it couldn't see the number that had doubled.</p>
+                </li>
+                <li>
+                    <a href="writing/lead-generation-engine.html">Finding sales targets in public property records</a>
+                    <p>Parcel data to 160 contact-ready targets. Asking the model to refute rather than confirm killed 40% of candidates before anyone made a call.</p>
+                </li>
             </ul>
         </section>
-        <section>
-            <h2>Downsampling Audio (Electrical and Signal Engineering)</h2>
-            <p>I am working with a friend to create a virtual instrument from thousands of audio recordings he collected from his Hammond B-3 organ. This is a report on a method I came up with to standardize the number of samples per second of the audio clips in order to remove a phasing issue we were having when the sounds were played together. This highlights my background and experience in electrical engineering and signal analysis.</p>
-            <ul>
-                <li><a href="https://colab.research.google.com/drive/1neNd_mLNR8YD1fWQYkFfFXHmzvEbHQxm?usp=sharing" target="_blank">Read the report</a></li>
-            </ul>
+
+        <section id="how" class="section">
+            <h2><span class="section-num">05</span> Methods</h2>
+            <div class="principles">
+                <div class="principle">
+                    <h3>Deterministic rules / model judgment split</h3>
+                    <p>Rules that must be auditable become tested code. Only genuinely semantic work goes to a model. Cuts cost and error rate.</p>
+                </div>
+                <div class="principle">
+                    <h3>Evaluation as a build gate</h3>
+                    <p>Graded answer keys, regression runs, negative controls. A change that fixes one case and breaks another is visible before it ships.</p>
+                </div>
+                <div class="principle">
+                    <h3>Adversarial verification</h3>
+                    <p>Independent refute-by-default reviewers over every candidate finding. Perspective-diverse verifiers beat redundant ones.</p>
+                </div>
+                <div class="principle">
+                    <h3>Deliver into existing tools</h3>
+                    <p>Ship into what the user already opens. End-to-end scope: substrate, model layer, interface, adoption.</p>
+                </div>
+            </div>
         </section>
-        <section>
-            <h2>Technology</h2>
-            <ul>
-                <li>Python</li>
-                <li>R</li>
-                <li>Git</li>
-                <li>Database Management: Azure</li>
-                <li>Web scraping</li>
-                <li>ML software (scikit-learn, tidymodels, etc.)</li>
-                <li>Web development</li>
-                <li>SQL</li>
-            </ul>
+
+        <section id="skills" class="section">
+            <h2><span class="section-num">06</span> Skills</h2>
+            <div class="skill-groups">
+                <div class="skill-group">
+                    <h3>AI / agent engineering</h3>
+                    <ul class="tags"><li>Applied LLMs</li><li>Agent architecture</li><li>Multi-agent verification</li><li>RAG &amp; retrieval</li><li>Evaluation &amp; calibration</li><li>MCP</li><li>Structured output</li></ul>
+                </div>
+                <div class="skill-group">
+                    <h3>Data platform</h3>
+                    <ul class="tags"><li>Python</li><li>SQL</li><li>dbt</li><li>Data modeling</li><li>Prefect</li><li>Azure</li><li>Infrastructure as code</li></ul>
+                </div>
+                <div class="skill-group">
+                    <h3>Document intelligence</h3>
+                    <ul class="tags"><li>Obligation extraction</li><li>Reconciliation logic</li><li>PDF / OCR forensics</li><li>Deterministic doc generation</li></ul>
+                </div>
+                <div class="skill-group">
+                    <h3>Foundations</h3>
+                    <ul class="tags"><li>Statistical inference</li><li>Supervised &amp; unsupervised learning</li><li>R</li><li>Requirements elicitation</li><li>Technical writing</li></ul>
+                </div>
+            </div>
         </section>
-        <section>
-            <h2>Mathematics/ML</h2>
-            <ul>
-                <li>Statistical inference, specifically for exploratory data analysis</li>
-                <li>Calculus</li>
-                <li>Linear algebra</li>
-                <li>Supervised and unsupervised learning algorithms</li>
-            </ul>
     </main>
-    <footer>
-        <p>&copy; 2024 Jack Wright</p>
+
+    <footer class="site-footer">
+        <p>© 2026 Jack Wright ·
+            <a href="https://github.com/JackJosephWright" target="_blank" rel="noopener">GitHub</a> ·
+            <a href="https://www.linkedin.com/in/jack-wright-97b9b61b7/" target="_blank" rel="noopener">LinkedIn</a>
+        </p>
     </footer>
 </body>
 </html>

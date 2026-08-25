@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>An LLM refused to block 97% of the time — Jack Wright</title>
+    <meta name="description" content="A naive LLM pilot reached 49% against Arena's bot but almost never blocked. The cause was not judgment.">
+    <meta property="og:title" content="An LLM refused to block 97% of the time">
+    <meta property="og:description" content="A naive LLM pilot reached 49% against Arena's bot but almost never blocked. The cause was not judgment.">
+    <meta property="og:type" content="article">
+    <meta name="twitter:card" content="summary">
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='18' fill='%23b4560e'/%3E%3Ctext x='50' y='68' font-size='52' font-family='Georgia,serif' font-weight='bold' fill='white' text-anchor='middle'%3EJW%3C/text%3E%3C/svg%3E">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../styles.css">
+</head>
+<body>
+    <article class="post">
+        <p class="post-back"><a href="../index.html#writing">← Writing</a></p>
+        <h1>An LLM refused to block 97% of the time</h1>
+
+        <dl class="spec">
+            <dt>Setup</dt><dd>Haiku 4.5 in the decision seat, no game-specific tuning, four-sentence system prompt</dd>
+            <dt>Result</dt><dd>27–28 over 55 games vs Arena's built-in AI. ~$0.03/game, ~58 decisions per game.</dd>
+            <dt>Corpus</dt><dd>4,201 logged decisions with the verbatim prompt the model saw</dd>
+        </dl>
+
+        <h2>The baseline</h2>
+        <p>
+            The first version of the brain is deliberately stupid: a four-sentence system
+            prompt, the board rendered as a few lines of text, the legal options numbered,
+            and a reply of one integer plus a short reason. No strategy content, no rules
+            primer, no chain of thought. It reached roughly parity with the game's own AI,
+            for three cents a game.
+        </p>
+        <p>
+            The point of a naive baseline is to have something to beat, and to make every
+            later addition earn its place as its own experiment rather than being quietly
+            folded in.
+        </p>
+
+        <h2>The finding</h2>
+        <p>
+            Across 276 blocking decisions, the model chose not to block 268 times. 97%.
+            Against an aggressive opponent that is close to the worst possible policy, and
+            it was the obvious thing to fix.
+        </p>
+        <p>
+            The natural conclusion is that a small model is bad at combat. That turned out
+            to be wrong, and the way it was wrong is the interesting part. Every decision
+            had been logged with the exact prompt the model received, so the question
+            "what did it actually know" was answerable.
+        </p>
+        <table>
+            <tr><th>Information</th><th>Available to the harness</th><th>Present in the prompt</th></tr>
+            <tr><td>Creature power and toughness</td><td>Yes</td><td>0 of 4,201</td></tr>
+            <tr><td>Which creatures are attacking</td><td>Yes</td><td>Never — attackers rendered as "tapped"</td></tr>
+            <tr><td>Available mana</td><td>Yes</td><td>0</td></tr>
+            <tr><td>Contents of the stack</td><td>Yes</td><td>0</td></tr>
+        </table>
+        <p>
+            The model was being asked whether to block without being told what was
+            attacking or how big anything was. It was not playing badly. It was playing
+            blind, and inventing the missing pieces — 9% of replies cite specific stat
+            lines that appear nowhere in their own prompt.
+        </p>
+
+        <h2>The other half was the body, not the brain</h2>
+        <p>
+            One logged game shows the model correctly deciding to block at 2 life, with the
+            reason "any unblocked flyer kills me," five times in fifty seconds. The decision
+            was right every time and never reached the board. The click was failing, the
+            game re-asked, and the model answered again.
+        </p>
+        <p>
+            So part of the no-block rate was never a decision at all. The rare correct block
+            was being lost in actuation, which is invisible if you only look at outcomes.
+        </p>
+
+        <h2>Naming things is the cheapest upgrade available</h2>
+        <p>
+            Wherever an option had no name, behaviour collapsed. On one prompt type the
+            model wrote "pay 3 life" in its reasoning more than fifty times, and the game
+            discarded a card every single time — the two buttons were unlabelled and the
+            mapping was inverted. On another, options were listed as bare object numbers,
+            and the model picked the first one 73% of the time.
+        </p>
+        <p>
+            A related bug was subtler. Loyalty abilities cost +1, 0 or −2, and the options
+            were numbered 0, 1, 2. The model reasoned about "the 0 ability" and answered 3.
+            Both were small integers in the same sentence and it mixed them up. The fix was
+            to put the ability's printed cost inside the option label so the mapping could
+            not be ambiguous.
+        </p>
+        <p>
+            None of these are model problems. They're interface problems, and they were
+            being measured as model problems.
+        </p>
+
+        <h2>Where it goes</h2>
+        <p>
+            The next version tells the model what it can see: stat lines, who is attacking,
+            available mana, the stack, and a computed line stating the combat arithmetic
+            outright. Judged offline against decisions a human graded, the naive baseline
+            scores 17%; a stronger model on the same blind prompt gets 36% — better, but
+            still failing most block decisions, which is what confirmed the problem was
+            information rather than reasoning.
+        </p>
+        <p>
+            There is also a trained win-probability model available. It is deliberately not
+            fed to the pilot. Handing a language model a number and asking it to act on the
+            number turns it into an executor for the statistics, and at that point the
+            statistics may as well run alone. It's available as an experiment, switched off
+            by default. <a href="win-prob.html">That work is written up separately</a>.
+        </p>
+
+        <p class="post-back post-back-end"><a href="../index.html#writing">← Writing</a></p>
+    </article>
+</body>
+</html>

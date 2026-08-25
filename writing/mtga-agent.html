@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Building a bot that plays Magic: The Gathering Arena — Jack Wright</title>
+    <meta name="description" content="A harness that drives the real game client so an LLM only has to make decisions, never fight the interface.">
+    <meta property="og:title" content="Building a bot that plays Magic: The Gathering Arena">
+    <meta property="og:description" content="A harness that drives the real game client so an LLM only has to make decisions, never fight the interface.">
+    <meta property="og:type" content="article">
+    <meta name="twitter:card" content="summary">
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='18' fill='%23b4560e'/%3E%3Ctext x='50' y='68' font-size='52' font-family='Georgia,serif' font-weight='bold' fill='white' text-anchor='middle'%3EJW%3C/text%3E%3C/svg%3E">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../styles.css">
+</head>
+<body>
+    <article class="post">
+        <p class="post-back"><a href="../index.html#writing">← Writing</a></p>
+        <h1>Building a bot that plays Magic: The Gathering Arena</h1>
+
+        <dl class="spec">
+            <dt>What</dt><dd>An LLM plays real games against the live Arena client, unattended, on a small VM fleet</dd>
+            <dt>Where it is</dt><dd>Playing. 49% against Arena's built-in AI, ~$0.03 per game.</dd>
+            <dt>Role</dt><dd>Sole engineer</dd>
+            <dt>Repo</dt><dd>Private</dd>
+        </dl>
+
+        <h2>What the project is</h2>
+        <p>
+            Magic: The Gathering Arena has no API. If you want software to play it, the
+            software has to use the game the way a person does — look at the screen, move
+            the mouse, click things, and work out what happened.
+        </p>
+        <p>
+            The project is the machinery that makes that possible, plus a language model
+            sitting on top of it making the actual game decisions. The split is the whole
+            design: the machinery handles every mechanical concern — where a card is on
+            screen, whether a click registered, what the board currently contains — and the
+            model is handed a game situation with the legal options already worked out, and
+            picks one. It never sees a pixel or a mouse coordinate.
+        </p>
+        <p>
+            The reason for building it that way is that the two problems fail differently. A
+            model that plays badly is a prompt problem. A model that plays fine but whose
+            clicks silently miss is an actuation problem, and if you can't tell them apart
+            you will spend months tuning prompts against a broken hand.
+        </p>
+
+        <h2>Why the game being enormous doesn't matter</h2>
+        <p>
+            Magic has tens of thousands of cards and adds more every quarter, with rules
+            interactions notorious enough that judges make careers of them. Working out what
+            you are legally allowed to do in a given position is genuinely hard.
+        </p>
+        <p>
+            But nothing here has to. The game client already computes the legal move set at
+            every decision point, and publishes it. So the bot is never reasoning about
+            rules — it receives a list of things it is permitted to do and chooses. That
+            turns an open-ended problem into a closed one before any of my code runs.
+        </p>
+        <p>
+            Which changes what needs building. Cards are effectively infinite, but the
+            interfaces are a fixed catalog: choose N of these, order these, assign this
+            damage, pay this cost. Support a prompt shape once and it works for every card
+            that ever uses it. Coverage is built against the interface, not the card pool,
+            and adding a new one is a single new file.
+        </p>
+
+        <h2>Reading the game without looking at it</h2>
+        <p>
+            The obvious approach is computer vision — screenshot the board and work out
+            what's on it. That is what my first attempt did, and it made everything fragile,
+            because reconstructing game state from pixels is error-prone in ways that are
+            hard to detect.
+        </p>
+        <p>
+            Arena writes a log file that turns out to carry nearly complete game state:
+            effective stats after all modifiers, what's tapped, abilities granted by other
+            cards, who controls something versus who owns it, and every zone change, damage
+            event and life change as it happens.
+        </p>
+        <p>
+            What the log contains no trace of is screen position. Not one coordinate. That
+            single gap decides the architecture — everything true comes from the log, and
+            the vision layer shrinks to answering one question: where is this specific card
+            on screen. Which is answered by moving the cursor and reading which object the
+            game reports underneath it. Identity from the log, position from the cursor.
+        </p>
+
+        <h2>The hard part is knowing whether anything worked</h2>
+        <p>
+            Clicking is easy. Knowing whether a click did what you intended is not — the
+            screen looks broadly the same either way, and code that returns "success" is
+            usually reporting only that it didn't crash.
+        </p>
+        <p>
+            So nothing counts as done because the bot says so. It counts as done when the
+            game emits new traffic proving something changed. If that doesn't arrive in
+            time, the success is withdrawn, the screen is photographed for diagnosis, and
+            the action retried. The waiting period varies by the kind of prompt, because
+            anything that waits on the opponent needs far longer, and otherwise the
+            measurement would be recording how long the opponent thought rather than whether
+            the bot actually did anything.
+        </p>
+
+        <p>
+            Two companion pieces: <a href="brain.html">what happened when the model started
+            making the decisions</a>, and <a href="win-prob.html">how you put a number on a
+            Magic position at all</a>.
+        </p>
+
+        <p class="post-back post-back-end"><a href="../index.html#writing">← Writing</a></p>
+    </article>
+</body>
+</html>

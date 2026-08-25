@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Generating a school year's reading curriculum — Jack Wright</title>
+    <meta name="description" content="A year of book-specific lesson plans across K-8 — normally a premium product only well-resourced schools can afford — for a few hundred dollars of compute, and repeatable.">
+    <meta property="og:title" content="Generating a school year's reading curriculum">
+    <meta property="og:description" content="900 lesson plans across K-8, every quotation verbatim from the real book.">
+    <meta property="og:type" content="article">
+    <meta name="twitter:card" content="summary">
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='18' fill='%23b4560e'/%3E%3Ctext x='50' y='68' font-size='52' font-family='Georgia,serif' font-weight='bold' fill='white' text-anchor='middle'%3EJW%3C/text%3E%3C/svg%3E">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../styles.css">
+</head>
+<body>
+    <article class="post">
+        <p class="post-back"><a href="../index.html#writing">← Writing</a></p>
+        <h1>Generating a school year's reading curriculum</h1>
+
+        <dl class="spec">
+            <dt>Status</dt><dd>In deployment. This is the live curriculum, not a pilot corpus.</dd>
+            <dt>Scale</dt><dd>900 lessons — 9 grade levels × 4 units × 25 lessons. All 900 reviewed and passed by a teacher.</dd>
+            <dt>Cost</dt><dd>~$0.05 per plan. A year of curriculum for roughly the price of a few textbooks.</dd>
+            <dt>Role</dt><dd>Sole engineer</dd>
+        </dl>
+
+        <h2>What this replaces</h2>
+        <p>
+            Lesson plans written for a specific book — not generic skills worksheets, but
+            plans built around the actual text a class is reading — are a premium product.
+            Schools either license them from a publisher or commission a curriculum
+            consultant to write them, and both are expensive enough that only
+            well-resourced schools end up with them. Everyone else teaches from whatever is
+            free and approximately relevant.
+        </p>
+        <p>
+            This produced a full year of them, across nine grade levels, for a few hundred
+            dollars of compute. And it is not a one-time effort — next year's book list runs
+            through the same pipeline at the same cost. That is the part that matters more
+            than the 900: the expensive thing was never one year of plans, it was needing a
+            specialist every time the books changed.
+        </p>
+
+        <h2>The constraint that shapes everything</h2>
+        <p>
+            The hard requirement isn't plan quality in the abstract. It's that every passage
+            a plan quotes is genuinely in the book. A teacher reads it aloud, in front of a
+            class, against the real page. A plan that quotes approximately is worse than no
+            plan.
+        </p>
+        <p>
+            So the model is never asked to recall a text. Purchased books are parsed into
+            chapters, chunked, and supplied as context, and quotations come from the
+            supplied text. Chapters carry their position in the source, so any quotation
+            traces back to where it came from.
+        </p>
+
+        <h2>Parsing books nobody formatted for you</h2>
+        <p>
+            Source books arrive with no consistent structure. A purchased trade book, a
+            public-domain transcription and a scanned reader all mark chapters differently,
+            and getting the boundaries wrong corrupts every quotation downstream.
+        </p>
+        <p>
+            Extraction tries five strategies in order — a table of contents, all-caps
+            headings, "Chapter N" patterns, markdown headings, and finally treating the
+            whole text as one chapter so the stage can never hard-fail. The first strategy
+            that finds at least two chapters wins, and which one won is recorded.
+        </p>
+        <p>
+            The interesting part is the guards, because the failure that matters is not a
+            crash but a parse that succeeds and is wrong:
+        </p>
+        <ul>
+            <li>A heading followed by less than 200 characters of prose is discarded — that rejects table-of-contents lines and page headers, which otherwise register as chapters.</li>
+            <li>When a title appears twice, the later one wins. Otherwise a chapter anchors to its own table-of-contents entry, and every chapter truncates to the length of a single line.</li>
+            <li>A lookup for several chapters returns whatever matched rather than failing wholesale, so one unrecognised reference doesn't discard its siblings.</li>
+        </ul>
+
+        <h2>Grade level, not grade band</h2>
+        <p>
+            Plans are generated per grade, not per band. Two grades inside one band reading
+            the same book get different vocabulary load, scaffolding and independent
+            practice. That is the difference between a plan that is at-level and one that is
+            merely nearby, and it's why the corpus is 900 plans rather than 100.
+        </p>
+
+        <h2>Teachers attacking the output is the mechanism</h2>
+        <p>
+            No generated lesson is used unreviewed. All 900 were read and passed before
+            entering a classroom, and the reviewer's job is to attack the plan rather than
+            approve it — scaffolding that escalates faster than the unit supports, a writing
+            task in the wrong place in the arc, a passage that doesn't support the stated
+            objective.
+        </p>
+        <p>
+            Corrections are captured against the specific lesson. Domain experts produce
+            correction data as a side effect of doing their normal work, at a volume no
+            single prompt author could generate, and reviewer time goes to judgment instead
+            of drafting.
+        </p>
+
+        <h2>Limits</h2>
+        <ul>
+            <li>Quotation fidelity depends on the parse. A badly digitised source degrades grounding before generation runs at all.</li>
+            <li>Every lesson needs human review to ship. That's the throughput constraint by design — this reduces the cost of drafting, not of approving.</li>
+            <li>Four units per grade so far. Each new one costs the same extraction and full-review cycle.</li>
+        </ul>
+
+        <p class="post-back post-back-end"><a href="../index.html#writing">← Writing</a></p>
+    </article>
+</body>
+</html>
