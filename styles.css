@@ -247,6 +247,26 @@ a:hover { text-decoration: underline; }
 .earlier ul { margin: 1rem 0 0.4rem 1.2rem; color: var(--ink-soft); font-size: 0.95rem; }
 .earlier li + li { margin-top: 0.6rem; }
 
+/* ---------- publications ---------- */
+
+.pubs {
+    list-style: none;
+    max-width: 50rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.9rem;
+}
+
+.pubs li {
+    color: var(--ink-soft);
+    font-size: 0.97rem;
+    padding-left: 1.1rem;
+    border-left: 3px solid var(--line);
+}
+
+.pubs strong { color: var(--ink); font-weight: 600; }
+.pubs a { font-weight: 600; white-space: nowrap; }
+
 /* ---------- principles ---------- */
 
 .principles {
